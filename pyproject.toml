@@ -1,0 +1,163 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling>=1.8.0", "hatch-vcs"]
+
+[project]
+authors = [
+  {name = "AI Colleagues", email = "info@ai-colleagues.com"}
+]
+classifiers = [
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12"
+]
+dependencies = [
+  "streamlit==1.37.0",
+  "langchain==0.2.3",
+  "langchain-core==0.2.5",
+  "langchain-community==0.2.4",
+  "langchain-openai==0.1.8",
+  "langchain-text-splitters==0.2.1",
+  "python-dotenv==1.0.1",
+  "watchdog"
+]
+description = "An LLM-powered smart agent with context-aware UI. All you need to do is to give your instructions and follow the instructions."
+dynamic = ["version"]
+keywords = ["AI", "Smart Agent"]
+name = "smart-stream"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = [
+  "bump2version",
+  "hatch",
+  "ruff==0.4.6",
+  "isort",
+  "mypy",
+  "pytest",
+  "pytest-cov==4.1.0",
+  "pre-commit",
+  "types-requests",
+  "pytest-asyncio==0.23.8"
+]
+docs = [
+  "mkdocs",
+  "mkdocs-material",
+  "mkdocs-jupyter",
+  "mkdocstrings[python]",
+  "mkdocs-gen-files"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "@overload",
+  "if TYPE_CHECKING:",
+  "if typing.TYPE_CHECKING:"
+]
+
+[tool.coverage.run]
+branch = true
+command_line = "-m pytest"
+source = ["smart_stream"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/.mypy_cache",
+  "/.pytest_cache",
+  "/.githooks"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["smart_stream"]
+
+[tool.hatch.envs.default]
+features = ["dev", "docs"]
+
+[tool.hatch.envs.default.scripts]
+coverage = [
+  "pytest --cov --cov-report term-missing --cov-report xml --junitxml=xunit-result.xml tests/"
+]
+format = [
+  "ruff format smart_stream/ tests/",
+  "ruff check smart_stream/ tests/ --fix",
+  "lint"
+]
+lint = [
+  "ruff check smart_stream/ tests/",
+  "mypy smart_stream/",
+  "ruff format smart_stream/ tests/ --check"
+]
+test = ["pytest tests/ --doctest-modules --doctest-ignore-import-errors"]
+
+[tool.hatch.envs.docs]
+features = ["docs"]
+
+[tool.hatch.envs.docs.scripts]
+build = ["mkdocs build"]
+serve = ["mkdocs serve"]
+
+[tool.hatch.publish.index]
+disable = true  # Requires confirmation when publishing to pypi.
+
+[tool.hatch.version]
+path = "smart_stream/__init__.py"
+
+[tool.mypy]
+disallow_untyped_defs = true
+ignore_missing_imports = true
+python_version = "3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+exclude = ["docs", "build"]
+line-length = 99
+# Allow unused variables when underscore-prefixed.
+target-version = "py310"
+
+[tool.ruff.lint]
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+extend-select = [
+  "D401",  # First line should be in imperative mood
+  "D400",  # First line should end in a period.
+  "D404",  # First word of the docstring should not be 'This'
+  "TID252"  # No relative imports (not pep8 compliant)
+]
+ignore = [
+  "PLR2004",  # magic value used in comparsion (i.e. `if ndays == 28: month_is_feb`).
+  "PLR0913",  # too many arguments
+  "D401"  # first line of docstring should be in imperative mood
+]
+select = [
+  "E",  # pycodestyle
+  "F",  # pyflakes
+  "B",  # flake8-bugbear
+  "D",  # pydocstyle
+  "C90",  # mccabe complexity
+  "I",  # isort
+  "N",  # PEP8-naming
+  "UP",  # pyupgrade (upgrade syntax to current syntax)
+  "PLE",  # Pylint error https://github.com/charliermarsh/ruff#error-ple
+  "PLR",  # Pylint refactor (e.g. too-many-arguments)
+  "PLW"  # Pylint warning (useless-else-on-loop)
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+known-first-party = ["smart_stream"]
+lines-after-imports = 2
+no-lines-before = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
