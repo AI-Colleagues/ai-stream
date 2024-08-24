@@ -2,6 +2,13 @@
 
 A smart app build with OpenAI and Streamlit. The needed Streamlit widgets will be rendered according to your requests.
 
+## Showcase
+
+
+https://github.com/user-attachments/assets/d4876186-b8bf-4f14-ab75-a29b857becf8
+
+
+
 ## Set up
 
 Install:
