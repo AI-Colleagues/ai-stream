@@ -116,7 +116,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 exclude = ["docs", "build"]
-line-length = 99
+line-length = 88
 # Allow unused variables when underscore-prefixed.
 target-version = "py310"
 
