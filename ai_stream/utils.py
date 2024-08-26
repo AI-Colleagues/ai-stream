@@ -1,4 +1,4 @@
-"""Definition for app specific states."""
+"""Definitions of app specific states."""
 
 from collections.abc import Callable
 from functools import wraps
@@ -9,8 +9,10 @@ from streamlit import session_state
 class AppState:
     """A custom session_state to centralise all session state operations.
 
-    When session_state are used, it's easy to lost the track of their
-    initialisation place, adding difficulty to maintenance.
+    `st.session_state` is problematic, e.g., it's easy to lose track of the
+    initialisation places of states. This class acts as a proxy to
+    `st.session_state`, so that the definition and usage of states are more
+    Pythonic and more tractable.
     """
 
     def __init__(self, *args: list, **kwargs: dict):
@@ -18,7 +20,7 @@ class AppState:
         super().__init__(*args, **kwargs)
         # Predefined states
         self.chat_history: list = []
-        """Chat history when tesing chatbot."""
+        """Chat history when talking to chatbot."""
 
 
 def ensure_app_state(func: Callable) -> Callable:

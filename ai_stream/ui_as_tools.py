@@ -13,7 +13,7 @@ UI_TOOLS = {}
 
 
 class StreamTool(BaseTool, ABC):
-    """An abstract class for tools used in Smart Stream."""
+    """An abstract class for tools used in AI Stream."""
 
     @classmethod
     @abstractmethod
