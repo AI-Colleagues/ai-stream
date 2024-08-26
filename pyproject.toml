@@ -23,10 +23,10 @@ dependencies = [
   "python-dotenv==1.0.1",
   "watchdog"
 ]
-description = "An LLM-powered smart agent with context-aware UI. All you need to do is to give your instructions and follow the instructions."
+description = "An LLM-powered AI agent with context-aware UI. All you need to do is to give your instructions and follow the instructions."
 dynamic = ["version"]
-keywords = ["AI", "Smart Agent"]
-name = "smart-stream"
+keywords = ["AI", "AI Agent"]
+name = "ai-stream"
 readme = "README.md"
 requires-python = ">=3.10"
 
@@ -62,7 +62,7 @@ exclude_lines = [
 [tool.coverage.run]
 branch = true
 command_line = "-m pytest"
-source = ["smart_stream"]
+source = ["ai_stream"]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
@@ -72,7 +72,7 @@ exclude = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["smart_stream"]
+packages = ["ai_stream"]
 
 [tool.hatch.envs.default]
 features = ["dev", "docs"]
@@ -82,14 +82,14 @@ coverage = [
   "pytest --cov --cov-report term-missing --cov-report xml --junitxml=xunit-result.xml tests/"
 ]
 format = [
-  "ruff format smart_stream/ tests/",
-  "ruff check smart_stream/ tests/ --fix",
+  "ruff format ai_stream/ tests/",
+  "ruff check ai_stream/ tests/ --fix",
   "lint"
 ]
 lint = [
-  "ruff check smart_stream/ tests/",
-  "mypy smart_stream/",
-  "ruff format smart_stream/ tests/ --check"
+  "ruff check ai_stream/ tests/",
+  "mypy ai_stream/",
+  "ruff format ai_stream/ tests/ --check"
 ]
 test = ["pytest tests/ --doctest-modules --doctest-ignore-import-errors"]
 
@@ -104,7 +104,7 @@ serve = ["mkdocs serve"]
 disable = true  # Requires confirmation when publishing to pypi.
 
 [tool.hatch.version]
-path = "smart_stream/__init__.py"
+path = "ai_stream/__init__.py"
 
 [tool.mypy]
 disallow_untyped_defs = true
@@ -149,7 +149,7 @@ select = [
 
 [tool.ruff.lint.isort]
 force-single-line = true
-known-first-party = ["smart_stream"]
+known-first-party = ["ai_stream"]
 lines-after-imports = 2
 no-lines-before = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 

@@ -1,6 +1,6 @@
-# Smart Stream
+# AI Stream
 
-A smart app build with OpenAI and Streamlit. The needed Streamlit widgets will be rendered according to your requests.
+A AI app build with OpenAI and Streamlit. The needed Streamlit widgets will be rendered according to your requests.
 
 ## Showcase
 
@@ -17,7 +17,7 @@ To set up, add `OPENAI_API_KEY` in your `.env` file.
 
 ## Run
 
-`streamlit run smart_stream/app.py`
+`streamlit run ai_stream/app.py`
 
 
 ## TODO

@@ -1,4 +1,4 @@
-"""Frontend for Smart Stream."""
+"""Main entry for AI Stream."""
 
 import os
 import streamlit as st
@@ -7,15 +7,16 @@ from langchain.agents import create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts import MessagesPlaceholder
 from langchain_openai import ChatOpenAI
-from smart_stream.ui_as_tools import UI_TOOLS
-from smart_stream.ui_as_tools import instantiate_ui_tools
-from smart_stream.utils import AppState
-from smart_stream.utils import ensure_app_state
+from ai_stream.ui_as_tools import UI_TOOLS
+from ai_stream.ui_as_tools import instantiate_ui_tools
+from ai_stream.utils import AppState
+from ai_stream.utils import ensure_app_state
 
 
 ASSISTANT_LABEL = "assistant"
 USER_LABEL = "user"
 TESTING = int(os.environ.get("TESTING", "0"))
+TITLE = "AI Stream"
 
 
 def get_response(
@@ -28,7 +29,7 @@ def get_response(
         [
             (
                 "system",
-                "You are a smart agent with a lot of tools. Call the right one "
+                "You are an AI agent with a lot of tools. Call the right one "
                 "according to user instructions.",
             ),
             *messages,
@@ -69,9 +70,9 @@ def get_response(
 
 @ensure_app_state
 def main(app_state: AppState) -> None:
-    """Tool layout."""
-    st.set_page_config("Smart Stream", page_icon="📱")
-    st.title("Smart Stream")
+    """Main layout."""
+    st.set_page_config(TITLE, page_icon="📱")
+    st.title(TITLE)
     for message in app_state.chat_history:  # Display all existing messages
         st.chat_message(message[0]).write(message[1])
 
