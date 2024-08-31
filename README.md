@@ -1,6 +1,6 @@
 # AI Stream
 
-An AI app build with OpenAI and Streamlit. The needed Streamlit widgets will be rendered according to your requests.
+An AI app built with OpenAI and Streamlit. The needed Streamlit widgets will be rendered according to your requests.
 
 ## Showcase
 

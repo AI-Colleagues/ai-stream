@@ -21,7 +21,7 @@ class StreamTool(BaseTool, ABC):
 
     @classmethod
     @abstractmethod
-    def render(cls, **kwargs: dict) -> None:
+    def render(cls, **kwargs: dict) -> Any:
         """The actual rendering action."""
 
 
