@@ -25,6 +25,9 @@ def get_response(
     model_name: str = "gpt-4o",
 ) -> None:
     """Send messages to backend to get an LLM response with UI rendering."""
+    msgs = [
+        msg if msg[0] != ASSISTANT_LABEL else (msg[0], msg[2]) for msg in messages
+    ]  # Discard tool calls
     chat_prompt = ChatPromptTemplate.from_messages(
         [
             (
@@ -32,7 +35,7 @@ def get_response(
                 "You are an AI agent with a lot of tools. Call the right one "
                 "according to user instructions.",
             ),
-            *messages,
+            *msgs,
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ]
     )
@@ -51,21 +54,35 @@ def get_response(
 
     # Return tool calls and agent response, but tool running (rendering) is
     # called at the frontend
+    # TODO: Sometimes the same tool was generated continuously
+    # TODO: currently only support one tool at a timex
     tool_call = {}
     if "intermediate_steps" in response:
         for action in response["intermediate_steps"]:
             tool_call[action[0].tool] = action[0].tool_input
-            break  # TODO: currently only support one tool at a timex
+            break
 
-    with st.chat_message(ASSISTANT_LABEL):
-        if tool_call:
-            for tool_name, tool_input in tool_call.items():
-                UI_TOOLS[tool_name].render(**tool_input)  # type: ignore
+    bot_response = ""
+    if "output" in response:
+        bot_response = response["output"]
+        app_state.chat_history.append((ASSISTANT_LABEL, tool_call, bot_response))
 
-        if "output" in response:
-            bot_response = response["output"]
-            st.write(response["output"])
-            app_state.chat_history.append((ASSISTANT_LABEL, bot_response))
+    st.rerun()  # This is necessary to trigger the history display in time
+
+
+def display_history(history: list[tuple]) -> None:
+    """Display all history messages."""
+    for message in history:
+        if message[0] == ASSISTANT_LABEL:
+            tool_call = message[1]
+            response = message[2]
+            with st.chat_message(ASSISTANT_LABEL):
+                if tool_call:
+                    for tool_name, tool_input in tool_call.items():
+                        UI_TOOLS[tool_name].render(**tool_input)
+                st.write(response)
+        else:
+            st.chat_message(message[0]).write(message[1])
 
 
 @ensure_app_state
@@ -73,8 +90,7 @@ def main(app_state: AppState) -> None:
     """Main layout."""
     st.set_page_config(TITLE, page_icon="📱")
     st.title(TITLE)
-    for message in app_state.chat_history:  # Display all existing messages
-        st.chat_message(message[0]).write(message[1])
+    display_history(app_state.chat_history)
 
     user_input = st.chat_input("Your message")
     if user_input:
