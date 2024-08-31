@@ -4,7 +4,7 @@ An AI app built with OpenAI and Streamlit. The needed Streamlit widgets will be 
 
 ## Showcase
 
-https://github.com/user-attachments/assets/2344cf2c-757d-46ce-87d7-fe1429e53e96
+https://github.com/user-attachments/assets/cb4515fe-8737-42b0-b48f-684ea419bae7
 
 ## Set up
 
