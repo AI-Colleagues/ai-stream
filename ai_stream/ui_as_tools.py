@@ -103,9 +103,14 @@ class FileUploader(StreamTool):
         pass
 
     @classmethod
-    def render(cls, **kwargs: dict) -> list[UploadedFile] | None:
+    def render(cls, **kwargs: dict) -> dict:
         """Call by frontend to render the UI."""
-        return st.file_uploader(**kwargs)  # type: ignore
+        files = st.file_uploader(**kwargs)  # type: ignore
+        if isinstance(files, UploadedFile):
+            files = [files]
+            return {"files": files}
+
+        return {}
 
 
 @register_tool
@@ -214,7 +219,10 @@ class DataFrame(StreamTool):
 
     args_schema: type[BaseModel] = DataFrameSchema
     name: str = "DataFrame"
-    description: str = "Tool for generating a Streamlit dataframe."
+    description: str = (
+        "Tool for generating a Streamlit dataframe. When this tool is called, "
+        "no textual table is needed."
+    )
 
     def _run(self, **kwargs: DataFrameSchema) -> None:
         pass
