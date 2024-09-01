@@ -166,7 +166,7 @@ def get_response(
 
 def display_history(app_state: AppState) -> None:
     """Display all history messages."""
-    history = app_state.chat_history  # TODO: Get from OpenAI Thread
+    history = app_state.chat_history
     app_state.recent_tool_output.clear()  # Clear previous tool_output
     for i, message in enumerate(history):
         if message[0] == ASSISTANT_LABEL:
