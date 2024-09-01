@@ -232,6 +232,8 @@ class DataFrame(StreamTool):
     @classmethod
     def render(cls, **kwargs: dict) -> None:
         """Call by frontend to render the UI."""
+        # TODO: Output needs to be improved to tell the Assistant that the
+        # table has been generated.
         st.dataframe(**kwargs)  # type: ignore
 
 

@@ -27,3 +27,4 @@ To set up, add `OPENAI_API_KEY` to your `.env` file.
 * [ ] Add unit tests
 * [ ] Add docs
 * [ ] Add CI/CD
+* [ ] Use multiple Assistants, e.g., separating UI and backend.
