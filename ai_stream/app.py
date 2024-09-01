@@ -143,7 +143,7 @@ def get_response(
     # Return tool calls and agent response, but tool running (rendering) is
     # called at the frontend
     # TODO: Sometimes the same tool was generated continuously
-    # TODO: currently only support one tool at a timex
+    # TODO: currently only support one tool at a time
     tool_call = {}
     if "intermediate_steps" in response:
         for action in response["intermediate_steps"]:

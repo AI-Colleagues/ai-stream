@@ -25,9 +25,10 @@ class StreamTool(BaseTool, ABC):
         """The actual rendering action."""
 
 
-def register_tool(cls: type[StreamTool]) -> None:
+def register_tool(cls: type[StreamTool]) -> Callable:
     """Register a tool."""
     UI_TOOLS[cls.__name__] = cls
+    return cls
 
 
 @register_tool
