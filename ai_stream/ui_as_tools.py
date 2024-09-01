@@ -37,7 +37,7 @@ class FileUploader(StreamTool):
     """Tool for generating a Streamlit file_uploader."""
 
     class FileUploaderSchema(BaseModel):
-        """Schema according to Streamlit docs."""
+        """Tool for displaying a Streamlit file_uploader."""
 
         label: str = Field(
             description=(
@@ -120,7 +120,7 @@ class DataFrame(StreamTool):
     """Tool for generating a Streamlit dataframe."""
 
     class DataFrameSchema(BaseModel):
-        """DataFrame schema according to Streamlit docs."""
+        """Tool for displaying a Streamlit dataframe."""
 
         # Official implementation has a type alias of Data. However, only
         # standard types (including typing types) are supported by LangChain.

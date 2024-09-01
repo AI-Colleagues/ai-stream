@@ -70,6 +70,7 @@ class UIAssistantEventHandler(AssistantEventHandler):
 
     def on_tool_call_delta(self, delta, snapshot):
         """Done tool call."""
+        # TODO: display code
         if delta.type == "code_interpreter":
             if delta.code_interpreter.input:
                 print(delta.code_interpreter.input, end="", flush=True)
