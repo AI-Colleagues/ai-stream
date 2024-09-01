@@ -7,6 +7,7 @@ import streamlit as st
 from openai import AssistantEventHandler
 from openai import OpenAI
 from openai.types.beta.threads import Text
+from openai.types.beta.threads.runs import ToolCall
 from streamlit.delta_generator import DeltaGenerator
 from typing_extensions import override
 from ai_stream.ui_as_tools import UI_TOOLS
@@ -50,6 +51,7 @@ class UIAssistantEventHandler(AssistantEventHandler):
 
     @override
     def on_text_created(self, text) -> None:
+        self.st_placeholder = st.empty()
         self.running_response = ""
 
     @override
@@ -61,6 +63,10 @@ class UIAssistantEventHandler(AssistantEventHandler):
     def on_text_done(self, text: Text) -> None:
         """Done generating."""
         self.app_state.chat_history.append((ASSISTANT_LABEL, {}, text.value))
+
+    @override
+    def on_tool_call_created(self, tool_call: ToolCall) -> None:
+        self.st_placeholder = st.empty()
 
     def on_tool_call_delta(self, delta, snapshot):
         """Done tool call."""
