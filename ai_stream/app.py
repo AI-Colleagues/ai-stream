@@ -151,17 +151,9 @@ def get_response(
             model=model_name,
             tools=tools,
         )
-    thread = client.beta.threads.create(
-        messages=[
-            {
-                "role": msg[0],
-                "content": msg[1] if msg[0] == USER_LABEL else msg[2],
-            }
-            for msg in app_state.chat_history
-        ]
-    )
+
     with client.beta.threads.runs.stream(
-        thread_id=thread.id,
+        thread_id=app_state.openai_thread_id,
         assistant_id=assistant.id,
         event_handler=UIAssistantEventHandler(
             app_state=app_state, st_placeholder=st_placeholder
@@ -196,12 +188,20 @@ def main(app_state: AppState) -> None:
     """Main layout."""
     st.set_page_config(TITLE, page_icon="📱")
     st.title(TITLE)
+    if not app_state.openai_thread_id:
+        thread = client.beta.threads.create()
+        app_state.openai_thread_id = thread.id
     display_history(app_state)
 
     user_input = st.chat_input("Your message")
     if user_input:
         app_state.chat_history.append((USER_LABEL, user_input))
         st.chat_message(USER_LABEL).write(user_input)
+        client.beta.threads.messages.create(
+            app_state.openai_thread_id,
+            role="user",
+            content=user_input,
+        )
 
         with st.chat_message(ASSISTANT_LABEL):
             get_response(app_state)
