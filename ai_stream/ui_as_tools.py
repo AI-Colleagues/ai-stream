@@ -120,7 +120,7 @@ class DataFrame(StreamTool):
     """Tool for generating a Streamlit dataframe."""
 
     class DataFrameSchema(BaseModel):
-        """Tool for displaying a Streamlit dataframe."""
+        """Tool for displaying a Streamlit dataframe when needed."""
 
         # Official implementation has a type alias of Data. However, only
         # standard types (including typing types) are supported by LangChain.
@@ -232,8 +232,6 @@ class DataFrame(StreamTool):
     @classmethod
     def render(cls, **kwargs: dict) -> None:
         """Call by frontend to render the UI."""
-        # TODO: Output needs to be improved to tell the Assistant that the
-        # table has been generated.
         st.dataframe(**kwargs)  # type: ignore
 
 

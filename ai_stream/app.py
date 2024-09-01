@@ -96,7 +96,9 @@ class UIAssistantEventHandler(AssistantEventHandler):
             logger.info(f"Running tool {tool_name}.")
             UI_TOOLS[tool_name]().render(**kwargs)
 
-            tool_outputs.append({"tool_call_id": tool.id, "output": ""})
+            tool_outputs.append(
+                {"tool_call_id": tool.id, "output": "Widget displayed to user."}
+            )
 
         # Submit all tool_outputs at the same time
         response = self.submit_tool_outputs(tool_outputs, run_id)
