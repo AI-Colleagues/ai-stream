@@ -10,6 +10,7 @@ import streamlit as st
 from langchain.pydantic_v1 import BaseModel
 from langchain.pydantic_v1 import Field
 from langchain_core.tools import BaseTool
+from langchain_core.utils.function_calling import convert_to_openai_function
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 
@@ -199,7 +200,7 @@ class DataFrame(StreamTool):
                 "store the selection state. The selection state is read-only."
             ),
         )
-        on_select: str | Callable = Field(
+        on_select: str = Field(
             default="ignore",
             description=(
                 "How the dataframe should respond to user selection events. "
@@ -239,5 +240,18 @@ def instantiate_ui_tools() -> list[StreamTool]:
     tools = []
     for tool_cls in UI_TOOLS.values():
         tools.append(tool_cls())  # type: ignore
+
+    return tools
+
+
+def tools_to_openai_functions() -> list[dict]:
+    """Convert to OpenAI functions."""
+    tools = []
+    for tool_cls in UI_TOOLS.values():
+        schema_cls_name = f"{tool_cls.__name__}Schema"
+        schema_cls = getattr(tool_cls, schema_cls_name)
+        tools.append(
+            {"type": "function", "function": convert_to_openai_function(schema_cls)}
+        )  # type: ignore
 
     return tools
