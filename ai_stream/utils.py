@@ -21,6 +21,10 @@ class AppState:
         # Predefined states
         self.chat_history: list = []
         """Chat history when talking to chatbot."""
+        self.openai_thread_id: str = ""
+        """OpenAI Thread ID."""
+        self.recent_tool_output: dict = {}
+        """The latest tool output if any."""
 
 
 def ensure_app_state(func: Callable) -> Callable:

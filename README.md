@@ -1,10 +1,10 @@
 # AI Stream
 
-An AI app built with OpenAI and Streamlit. The needed Streamlit widgets will be rendered according to your requests.
+An AI app built with OpenAI and Streamlit. The necessary Streamlit widgets will be rendered according to your requests.
 
 ## Showcase
 
-https://github.com/user-attachments/assets/acccd2dd-343f-4faf-9689-24380eefe833
+https://github.com/user-attachments/assets/96db4e0d-2792-4ca1-8065-ab8c80730d18
 
 ## Set up
 
@@ -13,7 +13,7 @@ Install:
 pip install -e .
 ```
 
-To set up, add `OPENAI_API_KEY` in your `.env` file.
+To set up, add `OPENAI_API_KEY` to your `.env` file.
 
 ## Run
 
@@ -22,8 +22,9 @@ To set up, add `OPENAI_API_KEY` in your `.env` file.
 
 ## TODO
 
-* [ ] Handle input data
-* [ ] Add more support for Streamlit widgets
+* [x] Handle input data
+* [x] Add more support for Streamlit widgets to create an MVP
 * [ ] Add unit tests
 * [ ] Add docs
 * [ ] Add CI/CD
+* [ ] Use multiple Assistants, e.g., separating UI and backend.

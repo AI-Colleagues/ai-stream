@@ -10,6 +10,7 @@ import streamlit as st
 from langchain.pydantic_v1 import BaseModel
 from langchain.pydantic_v1 import Field
 from langchain_core.tools import BaseTool
+from langchain_core.utils.function_calling import convert_to_openai_function
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 
@@ -25,9 +26,10 @@ class StreamTool(BaseTool, ABC):
         """The actual rendering action."""
 
 
-def register_tool(cls: type[StreamTool]) -> None:
+def register_tool(cls: type[StreamTool]) -> Callable:
     """Register a tool."""
     UI_TOOLS[cls.__name__] = cls
+    return cls
 
 
 @register_tool
@@ -35,7 +37,7 @@ class FileUploader(StreamTool):
     """Tool for generating a Streamlit file_uploader."""
 
     class FileUploaderSchema(BaseModel):
-        """Schema according to Streamlit docs."""
+        """Tool for displaying a Streamlit file_uploader."""
 
         label: str = Field(
             description=(
@@ -103,9 +105,14 @@ class FileUploader(StreamTool):
         pass
 
     @classmethod
-    def render(cls, **kwargs: dict) -> list[UploadedFile] | None:
+    def render(cls, **kwargs: dict) -> dict:
         """Call by frontend to render the UI."""
-        return st.file_uploader(**kwargs)  # type: ignore
+        files = st.file_uploader(**kwargs)  # type: ignore
+        if isinstance(files, UploadedFile):
+            files = [files]
+            return {"files": files}
+
+        return {}
 
 
 @register_tool
@@ -113,7 +120,7 @@ class DataFrame(StreamTool):
     """Tool for generating a Streamlit dataframe."""
 
     class DataFrameSchema(BaseModel):
-        """DataFrame schema according to Streamlit docs."""
+        """Tool for displaying a Streamlit dataframe when needed."""
 
         # Official implementation has a type alias of Data. However, only
         # standard types (including typing types) are supported by LangChain.
@@ -193,7 +200,7 @@ class DataFrame(StreamTool):
                 "store the selection state. The selection state is read-only."
             ),
         )
-        on_select: str | Callable = Field(
+        on_select: str = Field(
             default="ignore",
             description=(
                 "How the dataframe should respond to user selection events. "
@@ -214,7 +221,10 @@ class DataFrame(StreamTool):
 
     args_schema: type[BaseModel] = DataFrameSchema
     name: str = "DataFrame"
-    description: str = "Tool for generating a Streamlit dataframe."
+    description: str = (
+        "Tool for generating a Streamlit dataframe. When this tool is called, "
+        "no textual table is needed."
+    )
 
     def _run(self, **kwargs: DataFrameSchema) -> None:
         pass
@@ -230,5 +240,18 @@ def instantiate_ui_tools() -> list[StreamTool]:
     tools = []
     for tool_cls in UI_TOOLS.values():
         tools.append(tool_cls())  # type: ignore
+
+    return tools
+
+
+def tools_to_openai_functions() -> list[dict]:
+    """Convert to OpenAI functions."""
+    tools = []
+    for tool_cls in UI_TOOLS.values():
+        schema_cls_name = f"{tool_cls.__name__}Schema"
+        schema_cls = getattr(tool_cls, schema_cls_name)
+        tools.append(
+            {"type": "function", "function": convert_to_openai_function(schema_cls)}
+        )  # type: ignore
 
     return tools
