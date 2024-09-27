@@ -3,12 +3,54 @@
 import json
 import streamlit as st
 from ai_stream import TESTING
+from ai_stream.db.aws import FunctionsTable
 from ai_stream.utils import create_id
 from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
 
 
 PARAM_TYPES = ["string", "number", "integer", "boolean", "array", "object"]
+
+
+def convert_json_schema_to_function_dict(json_str: str) -> dict:
+    """Converts a JSON Schema into an OpenAI function dictionary."""
+    json_schema = json.loads(json_str)
+    # Extract the necessary fields
+    function_name = json_schema.get("name")
+    function_description = json_schema.get("description")
+    parameters = json_schema.get("parameters")
+    required = parameters["required"]
+    converted_params = {}
+    for param_name, param in parameters["properties"].items():
+        param_id = create_id()
+        converted_params[param_id] = {
+            "name": param_name,
+            "description": param["description"],
+            "type": param["type"],
+            "required": param_name in required,
+            "enum": param.get("enum", []),  # For enum values
+            "items_type": param.get("items", {}).get("type", "string"),
+        }
+
+    # Construct the function dictionary
+    function_dict = {
+        "name": function_name,
+        "description": function_description,
+        "parameters": converted_params,
+    }
+
+    return function_dict
+
+
+def load_functions(app_state: AppState) -> None:
+    """Load functions from DB."""
+    if app_state.function_tools:  # Already loaded
+        return
+    items = FunctionsTable.scan()
+    functions = {
+        item.id: convert_json_schema_to_function_dict(item.value) for item in items
+    }
+    app_state.function_tools.update(functions)
 
 
 def add_function(app_state: AppState) -> None:
@@ -25,7 +67,7 @@ def remove_function(app_state: AppState, function_id: str) -> None:
 
 def build_json_schema(
     function_name: str, function_description: str, parameters: dict
-) -> dict:
+) -> str:
     """Build json schema given the function parameters."""
     required_params = [
         param["name"]
@@ -44,16 +86,17 @@ def build_json_schema(
             prop["items"] = {"type": param["items_type"]}
         properties[param["name"]] = prop
 
+    parameters = {"type": "object", "properties": properties}
+    if required_params:
+        parameters["required"] = required_params
+
     json_schema = {
         "name": function_name,
         "description": function_description,
-        "parameters": {"type": "object", "properties": properties},
+        "parameters": parameters,
     }
 
-    if required_params:
-        json_schema["parameters"]["required"] = required_params
-
-    return json_schema
+    return json.dumps(json_schema, indent=2)
 
 
 def add_parameter(selected_function: dict) -> None:
@@ -126,6 +169,8 @@ def main(app_state: AppState) -> None:
     if st.button("New Function"):
         add_function(app_state)
 
+    load_functions(app_state)
+
     if not app_state.function_tools:
         st.write("No functions available. Click 'New Function' to create one.")
         st.stop()
@@ -142,6 +187,7 @@ def main(app_state: AppState) -> None:
     )
 
     # Now get the selected function
+    assert function_id
     selected_function = app_state.function_tools[function_id]
 
     # Function Name and Description
@@ -176,8 +222,14 @@ def main(app_state: AppState) -> None:
 
     st.header("Generated JSON Schema")
 
-    json_output = json.dumps(json_schema, indent=2)
-    st.code(json_output, language="json")
+    st.code(json_schema, language="json")
+
+    if st.button("Save Function"):
+        item = FunctionsTable(
+            id=function_id, name=selected_function["name"], value=json_schema
+        )
+        item.save()
+        st.success("Saved to DB.")
 
     # Option to remove the function
     if st.button("Remove Function"):

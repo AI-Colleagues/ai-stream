@@ -40,6 +40,20 @@ class PromptsTable(Model):
     value = UnicodeAttribute()
 
 
+@register_pynamodb_table
+class FunctionsTable(Model):
+    """Table for storing prompts."""
+
+    class Meta(DefaultTableMeta):
+        """Table meta."""
+
+        table_name = config.dynamodb.functions_table
+
+    id = UnicodeAttribute(hash_key=True)
+    name = UnicodeAttribute(range_key=True)
+    value = UnicodeAttribute()
+
+
 def _prepare_dev_env() -> None:
     os.environ["AWS_ACCESS_KEY_ID"] = "testing"
     os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
