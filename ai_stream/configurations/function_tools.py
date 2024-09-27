@@ -134,7 +134,7 @@ def main(app_state: AppState) -> None:
         func_id: func["name"] for func_id, func in app_state.function_tools.items()
     }
 
-    function_id = st.selectbox(
+    function_id = st.sidebar.selectbox(
         "Select Function",
         options=function_id2name,
         format_func=lambda x: function_id2name[x],
