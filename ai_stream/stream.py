@@ -5,8 +5,12 @@ import logging
 import streamlit as st
 from openai import AssistantEventHandler
 from openai import OpenAI
+from openai.types.beta import AssistantStreamEvent
+from openai.types.beta.threads import Run
 from openai.types.beta.threads import Text
+from openai.types.beta.threads import TextDelta
 from openai.types.beta.threads.runs import ToolCall
+from openai.types.beta.threads.runs import ToolCallDelta
 from streamlit.delta_generator import DeltaGenerator
 from typing_extensions import override
 from ai_stream import TESTING
@@ -38,7 +42,11 @@ class UIAssistantEventHandler(AssistantEventHandler):
     """Event handler for UI Assistant."""
 
     def __init__(
-        self, *args, app_state: AppState, st_placeholder: DeltaGenerator, **kwargs
+        self,
+        *args: list,
+        app_state: AppState,
+        st_placeholder: DeltaGenerator,
+        **kwargs: dict,
     ):
         """Initialise."""
         self.app_state = app_state
@@ -49,12 +57,13 @@ class UIAssistantEventHandler(AssistantEventHandler):
         super().__init__(*args, **kwargs)
 
     @override
-    def on_text_created(self, text) -> None:
+    def on_text_created(self, text: Text) -> None:
         self.st_placeholder = st.empty()
         self.running_response = ""
 
     @override
-    def on_text_delta(self, delta, snapshot):
+    def on_text_delta(self, delta: TextDelta, snapshot: Text) -> None:
+        assert delta.value
         self.running_response += delta.value
         with self.st_placeholder:
             st.write(self.running_response)
@@ -67,10 +76,11 @@ class UIAssistantEventHandler(AssistantEventHandler):
     def on_tool_call_created(self, tool_call: ToolCall) -> None:
         self.st_placeholder = st.empty()
 
-    def on_tool_call_delta(self, delta, snapshot):
+    def on_tool_call_delta(self, delta: ToolCallDelta, snapshot: ToolCall) -> None:
         """Done tool call."""
         # TODO: display code
         if delta.type == "code_interpreter":
+            assert delta.code_interpreter
             if delta.code_interpreter.input:
                 print(delta.code_interpreter.input, end="", flush=True)
             if delta.code_interpreter.outputs:
@@ -80,20 +90,21 @@ class UIAssistantEventHandler(AssistantEventHandler):
                         print(f"\n{output.logs}", flush=True)
 
     @override
-    def on_event(self, event):
+    def on_event(self, event: AssistantStreamEvent) -> None:
         if event.event == "thread.run.requires_action":
             run_id = event.data.id  # Retrieve the run ID from the event data
             with self.st_placeholder.container():
                 self.handle_requires_action(event.data, run_id)
 
-    def handle_requires_action(self, data, run_id):
+    def handle_requires_action(self, data: Run, run_id: str) -> None:
         """Call tools."""
         tool_outputs = []
+        assert data.required_action
         for tool in data.required_action.submit_tool_outputs.tool_calls:
             kwargs = json.loads(tool.function.arguments)
             tool_name = tool.function.name.replace("Schema", "")
             logger.info(f"Running tool {tool_name}.")
-            UI_TOOLS[tool_name]().render(**kwargs)
+            UI_TOOLS[tool_name].render(**kwargs)
 
             tool_outputs.append(
                 {"tool_call_id": tool.id, "output": "Widget displayed to user."}
@@ -105,8 +116,9 @@ class UIAssistantEventHandler(AssistantEventHandler):
             (ASSISTANT_LABEL, {tool_name: kwargs}, response)
         )
 
-    def submit_tool_outputs(self, tool_outputs, run_id):
+    def submit_tool_outputs(self, tool_outputs: list, run_id: str) -> str:
         """Use the submit_tool_outputs_stream helper."""
+        assert self.current_run
         with client.beta.threads.runs.submit_tool_outputs_stream(
             thread_id=self.current_run.thread_id,
             run_id=self.current_run.id,
@@ -151,7 +163,7 @@ def get_response(
         assistant = client.beta.assistants.create(
             instructions=SYSTEM_PROMPT,
             model=model_name,
-            tools=tools,
+            tools=tools,  # type: ignore[arg-type]
         )
 
     with client.beta.threads.runs.stream(

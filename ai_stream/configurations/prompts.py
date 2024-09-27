@@ -5,7 +5,7 @@ from ai_stream import TESTING
 from ai_stream.utils import create_id
 
 
-def edit_prompt(prompt: str, prompt_name: str, prompt_id: str = ""):
+def edit_prompt(prompt: str, prompt_name: str, prompt_id: str = "") -> None:
     """Edit the given prompt."""
     if st.checkbox("New Prompt"):
         prompt_value = st.text_area("Edit Prompt", value="", height=500)
@@ -25,7 +25,7 @@ def review_prompt(prompt: str) -> None:
     st.markdown(prompt)
 
 
-def main():
+def main() -> None:
     """Main layout."""
     # Get all prompt names and ids from DB
     # prompts = PromptsTable.scan(attributes_to_get="name, id")
@@ -43,6 +43,7 @@ def main():
     )
     # Get selected prompt from DB
     # prompt = PromptsTable.get(hash_key=prompt_choice)
+    assert prompt_id
     prompt = prompts[prompt_id]
 
     st.sidebar.caption(f"ID: {prompt_id}")
