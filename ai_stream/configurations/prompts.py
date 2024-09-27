@@ -6,7 +6,7 @@ from ai_stream.db.aws import PromptsTable
 from ai_stream.utils import create_id
 
 
-def edit_prompt(prompt: str, prompt_name: str, prompt_id: str = "") -> None:
+def edit_prompt(prompt: str, prompt_name: str, prompt_id: str) -> None:
     """Edit the given prompt."""
     if st.checkbox("New Prompt"):
         prompt_value = st.text_area("Edit Prompt", value="", height=500)
@@ -17,8 +17,9 @@ def edit_prompt(prompt: str, prompt_name: str, prompt_id: str = "") -> None:
         prompt_name = st.text_input("Prompt Name", prompt_name)
     if st.button("Save", disabled=not (prompt_value and prompt_name)):
         # Save to DB
+        item = PromptsTable(id=prompt_id, name=prompt_name, value=prompt_value)
+        item.save()
         st.success(f"Prompt has been saved with name {prompt_name} and ID {prompt_id}.")
-        # st.stop()
 
 
 def review_prompt(prompt: str) -> None:
@@ -35,12 +36,17 @@ def main() -> None:
         "Prompts", prompt_id2name, format_func=lambda x: prompt_id2name[x]
     )
     # Get selected prompt from DB
-    assert prompt_id
-    prompt_name = prompt_id2name[prompt_id]
-    prompt = PromptsTable.get(hash_key=prompt_id, range_key=prompt_name)
-    prompt_value = prompt.value
+    if not prompt_id:
+        prompt_value = ""
+        prompt_name = ""
+        prompt_id = create_id()
+        st.warning("No prompts yet.")
+    else:
+        prompt_name = prompt_id2name[prompt_id]
+        prompt = PromptsTable.get(hash_key=prompt_id, range_key=prompt_name)
+        prompt_value = prompt.value
 
-    st.sidebar.caption(f"ID: {prompt_id}")
+        st.sidebar.caption(f"ID: {prompt_id}")
     edit_delete = st.checkbox("Edit/Delete")
     if edit_delete:
         edit_prompt(prompt_value, prompt_name, prompt_id)
