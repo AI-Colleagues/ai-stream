@@ -2,10 +2,11 @@
 
 import streamlit as st
 from ai_stream import TESTING
+from ai_stream.db.aws import PromptsTable
 from ai_stream.utils import create_id
 
 
-def edit_prompt(prompt: str, prompt_name: str, prompt_id: str = "") -> None:
+def edit_prompt(prompt: str, prompt_name: str, prompt_id: str) -> None:
     """Edit the given prompt."""
     if st.checkbox("New Prompt"):
         prompt_value = st.text_area("Edit Prompt", value="", height=500)
@@ -16,8 +17,9 @@ def edit_prompt(prompt: str, prompt_name: str, prompt_id: str = "") -> None:
         prompt_name = st.text_input("Prompt Name", prompt_name)
     if st.button("Save", disabled=not (prompt_value and prompt_name)):
         # Save to DB
+        item = PromptsTable(id=prompt_id, name=prompt_name, value=prompt_value)
+        item.save()
         st.success(f"Prompt has been saved with name {prompt_name} and ID {prompt_id}.")
-        # st.stop()
 
 
 def review_prompt(prompt: str) -> None:
@@ -28,33 +30,28 @@ def review_prompt(prompt: str) -> None:
 def main() -> None:
     """Main layout."""
     # Get all prompt names and ids from DB
-    # prompts = PromptsTable.scan(attributes_to_get="name, id")
-    # prompt_name_ids = {prompt.id: prompt.name for prompt in prompts}
-    prompt_id2name = {
-        "prompt1": "Prompt 1",
-        "prompt2": "Prompt 2",
-    }
-    prompts = {
-        "prompt1": "You are a helpful assistant.",
-        "prompt2": "You are a helpful assistant too.",
-    }
+    items = PromptsTable.scan()
+    prompt_id2name = {prompt.id: prompt.name for prompt in items}
     prompt_id = st.sidebar.selectbox(
         "Prompts", prompt_id2name, format_func=lambda x: prompt_id2name[x]
     )
     # Get selected prompt from DB
-    # prompt = PromptsTable.get(hash_key=prompt_choice)
-    assert prompt_id
-    prompt = prompts[prompt_id]
+    if not prompt_id:
+        prompt_value = ""
+        prompt_name = ""
+        prompt_id = create_id()
+        st.warning("No prompts yet.")
+    else:
+        prompt_name = prompt_id2name[prompt_id]
+        prompt = PromptsTable.get(hash_key=prompt_id, range_key=prompt_name)
+        prompt_value = prompt.value
 
-    st.sidebar.caption(f"ID: {prompt_id}")
-    prompt_name = prompt_id2name[prompt_id]
-    prompt_value = prompt
-
+        st.sidebar.caption(f"ID: {prompt_id}")
     edit_delete = st.checkbox("Edit/Delete")
     if edit_delete:
         edit_prompt(prompt_value, prompt_name, prompt_id)
     else:
-        review_prompt(prompt)
+        review_prompt(prompt_value)
 
 
 if not TESTING:
