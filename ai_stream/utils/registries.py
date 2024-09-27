@@ -50,12 +50,12 @@ class PromptsPage(AppPage):
 
 
 @register_page
-class ToolFunctionsPage(AppPage):
-    """Tool Functions page."""
+class FunctionToolsPage(AppPage):
+    """Function tools page."""
 
     group: str = "Configurations"
     page: StreamlitPage = st.Page(
-        "configurations/tool_functions.py", title="Tool Functions", icon="🛠️"
+        "configurations/function_tools.py", title="Function Tools", icon="🛠️"
     )
     weight: float = 1
 
