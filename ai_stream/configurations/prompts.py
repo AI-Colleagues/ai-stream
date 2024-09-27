@@ -2,6 +2,7 @@
 
 import streamlit as st
 from ai_stream import TESTING
+from ai_stream.db.aws import PromptsTable
 from ai_stream.utils import create_id
 
 
@@ -28,33 +29,23 @@ def review_prompt(prompt: str) -> None:
 def main() -> None:
     """Main layout."""
     # Get all prompt names and ids from DB
-    # prompts = PromptsTable.scan(attributes_to_get="name, id")
-    # prompt_name_ids = {prompt.id: prompt.name for prompt in prompts}
-    prompt_id2name = {
-        "prompt1": "Prompt 1",
-        "prompt2": "Prompt 2",
-    }
-    prompts = {
-        "prompt1": "You are a helpful assistant.",
-        "prompt2": "You are a helpful assistant too.",
-    }
+    items = PromptsTable.scan()
+    prompt_id2name = {prompt.id: prompt.name for prompt in items}
     prompt_id = st.sidebar.selectbox(
         "Prompts", prompt_id2name, format_func=lambda x: prompt_id2name[x]
     )
     # Get selected prompt from DB
-    # prompt = PromptsTable.get(hash_key=prompt_choice)
     assert prompt_id
-    prompt = prompts[prompt_id]
+    prompt_name = prompt_id2name[prompt_id]
+    prompt = PromptsTable.get(hash_key=prompt_id, range_key=prompt_name)
+    prompt_value = prompt.value
 
     st.sidebar.caption(f"ID: {prompt_id}")
-    prompt_name = prompt_id2name[prompt_id]
-    prompt_value = prompt
-
     edit_delete = st.checkbox("Edit/Delete")
     if edit_delete:
         edit_prompt(prompt_value, prompt_name, prompt_id)
     else:
-        review_prompt(prompt)
+        review_prompt(prompt_value)
 
 
 if not TESTING:
