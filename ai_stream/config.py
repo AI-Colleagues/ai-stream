@@ -18,7 +18,7 @@ def get_logger(module_name: str) -> logging.Logger:
     return logger
 
 
-# Manually initialize Hydra
+# Initialize Hydra
 def load_config(config_name: str = "default") -> DictConfig:
     """Load the configuration for the application."""
     config_dir = "../config"
