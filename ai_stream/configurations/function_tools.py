@@ -308,27 +308,41 @@ def main(app_state: AppState) -> None:
     st.code(json_schema, language="json")
 
     if st.button("Save Function"):
-        function_name = new_name
         try:
-            existing_function = FunctionsTable.get(function_id, function_name)
+            existing_function = FunctionsTable.get(function_id, new_name)
         except DoesNotExist:
             existing_function = None
         if existing_function:
             existing_function.update(actions=[FunctionsTable.value.set(schema)])
+
+            if existing_function.used_by:
+                for assistant_id in existing_function.used_by:
+                    assistant = app_state.openai_client.beta.assistants.retrieve(
+                        assistant_id
+                    )
+                    tools = [
+                        tool.to_dict()
+                        for tool in assistant.tools
+                        if tool.function.name != function_name
+                    ]  # Remove old function
+                    tools.append({"type": "function", "function": schema})
+                    app_state.openai_client.beta.assistants.update(
+                        assistant_id, tools=tools
+                    )
             st.success(
-                f"Function has been saved with name {function_name} and "
+                f"Function has been saved with name {new_name} and "
                 f"ID {function_id}."
             )
         else:
             item = FunctionsTable(
-                id=function_id, name=function_name, used_by=[], value=schema
+                id=function_id, name=new_name, used_by=[], value=schema
             )
             item.save()
             st.success(
-                f"Function has been saved with name {function_name} and "
+                f"Function has been saved with name {new_name} and "
                 f"ID {function_id}."
             )
-        app_state.functions[function_id] = function_name
+        app_state.functions[function_id] = new_name
 
     # Option to remove the function
     if st.button("Remove Function"):
