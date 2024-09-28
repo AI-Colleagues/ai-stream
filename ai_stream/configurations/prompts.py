@@ -9,7 +9,9 @@ from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
 
 
-def edit_prompt(prompt: str, prompt_name: str, prompt_id: str) -> None:
+def edit_prompt(
+    app_state: AppState, prompt: str, prompt_name: str, prompt_id: str
+) -> None:
     """Edit the given prompt."""
     if st.checkbox("New Prompt"):
         prompt_value = st.text_area("Edit Prompt", value="", height=500)
@@ -29,6 +31,11 @@ def edit_prompt(prompt: str, prompt_name: str, prompt_id: str) -> None:
         if existing_prompt:
             # Update existing prompt
             existing_prompt.update(actions=[PromptsTable.value.set(prompt_value)])
+            if existing_prompt.used_by:
+                for assistant_id in existing_prompt.used_by:
+                    app_state.openai_client.beta.assistants.update(
+                        assistant_id, instructions=prompt_value
+                    )
             st.success(
                 f"Prompt has been updated with name {prompt_name} and ID {prompt_id}."
             )
@@ -73,7 +80,7 @@ def main(app_state: AppState) -> None:
         st.sidebar.caption(f"ID: {prompt_id}")
     edit_delete = st.checkbox("Edit/Delete")
     if edit_delete:
-        edit_prompt(prompt_value, prompt_name, prompt_id)
+        edit_prompt(app_state, prompt_value, prompt_name, prompt_id)
     else:
         review_prompt(prompt_value)
 
