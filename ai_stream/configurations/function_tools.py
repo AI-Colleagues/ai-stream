@@ -33,7 +33,7 @@ class FunctionParameter:
         self.items_type_index = PARAM_TYPES.index(self.items_type)
 
 
-def convert_json_schema_to_function_dict(json_str: str) -> dict:
+def load_from_json_schema(json_str: str) -> dict:
     """Converts a JSON Schema into an OpenAI function dictionary."""
     json_schema = json.loads(json_str)
     # Extract the necessary fields
@@ -69,9 +69,7 @@ def load_functions(app_state: AppState) -> None:
     if app_state.function_tools:  # Already loaded
         return
     items = FunctionsTable.scan()
-    functions = {
-        item.id: convert_json_schema_to_function_dict(item.value) for item in items
-    }
+    functions = {item.id: load_from_json_schema(item.value) for item in items}
     app_state.function_tools.update(functions)
 
 
@@ -217,7 +215,18 @@ def main(app_state: AppState) -> None:
 
     # Now get the selected function
     assert function_id
-    selected_function = app_state.function_tools[function_id]
+    stored_function = app_state.function_tools[function_id]
+    if st.checkbox("Expert Mode"):
+        current_schema = build_json_schema(
+            stored_function["name"],
+            stored_function["description"],
+            stored_function["parameters"],
+        )
+        with st.expander("Load from JSON Schema", expanded=True):
+            new_schema = st.text_area("JSON Schema", value=current_schema, height=200)
+            selected_function = load_from_json_schema(new_schema)
+    else:
+        selected_function = stored_function
 
     # Function Name and Description
     new_name = st.text_input(
