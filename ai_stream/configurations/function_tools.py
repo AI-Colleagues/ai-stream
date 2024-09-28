@@ -1,6 +1,7 @@
 """Configuration page for function tools."""
 
 import json
+from collections import OrderedDict
 from dataclasses import dataclass
 from dataclasses import field
 import streamlit as st
@@ -81,7 +82,9 @@ def add_function(app_state: AppState) -> None:
     """Add a new function."""
     new_id = create_id()
     new_function = {"name": "New Function", "description": "", "parameters": {}}
-    app_state.function_tools[new_id] = new_function
+    app_state.function_tools = OrderedDict(
+        [(new_id, new_function)] + list(app_state.function_tools.items())
+    )
 
 
 def remove_function(app_state: AppState, function_id: str, function_name: str) -> None:
