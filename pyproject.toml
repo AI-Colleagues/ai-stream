@@ -18,7 +18,7 @@ source = ["ai_stream"]
 [tool.mypy]
 disallow_untyped_defs = true
 ignore_missing_imports = true
-python_version = "3.10"
+python_version = "3.12"
 
 [tool.poetry]
 authors = ["AI Colleagues <info@ai-colleagues.com>"]
@@ -46,7 +46,7 @@ langchain-core = "0.2.5"
 moto = {version = "5.0.15", extras = ["server"]}
 openai = "1.50.2"
 pynamodb = "6.0.1"
-python = ">=3.10"
+python = ">=3.12,<4.0"
 python-dotenv = "1.0.1"
 streamlit = "1.38.0"
 streamlit_code_editor = "0.1.21"
