@@ -212,6 +212,33 @@ def add_assistant(app_state: AppState) -> None:
     )
 
 
+def save_assistant(app_state: AppState, assistant_id: str, configuration: dict) -> str:
+    """Save or update the given assistant."""
+    if assistant_id.startswith("asst_"):  # Update
+        assistant = app_state.openai_client.beta.assistants.update(
+            assistant_id, **configuration
+        )
+    else:
+        assistant = app_state.openai_client.beta.assistants.create(**configuration)
+    # Register to used prompt and functions
+    metadata = configuration["metadata"]
+    prompt_id = metadata["prompt_id"]
+    prompt_name = app_state.prompts[prompt_id]
+    item = PromptsTable.get(prompt_id, prompt_name)
+    if assistant.id not in item.used_by:
+        item.update(actions=[PromptsTable.used_by.set(item.used_by + [assistant.id])])
+    for key, val in metadata.items():
+        if not key.startswith("function_"):
+            continue
+        function_name = app_state.functions[val]
+        item = FunctionsTable.get(val, function_name)
+        if assistant.id not in item.used_by:
+            item.update(
+                actions=[FunctionsTable.used_by.set(item.used_by + [assistant.id])]
+            )
+    return assistant.id
+
+
 @ensure_app_state
 def main(app_state: AppState) -> None:
     """Main function to run the Streamlit app."""
@@ -230,21 +257,34 @@ def main(app_state: AppState) -> None:
     assert app_state.openai_client
     if st.button("Save Assistant"):
         # Save to OpenAI
-        if assistant_id.startswith("asst_"):  # Update
-            assistant = app_state.openai_client.beta.assistants.update(
-                assistant_id, **configuration
-            )
-        else:
-            assistant = app_state.openai_client.beta.assistants.create(**configuration)
+        assistant_id = save_assistant(app_state, assistant_id, configuration)
         # Save to app_state.assistants
-        app_state.assistants[assistant.id] = configuration["name"]
-        st.success(f"Assistant {assistant.id} saved!")
+        app_state.assistants[assistant_id] = configuration["name"]
+        st.success(f"Assistant {assistant_id} saved!")
 
     if st.button("Delete Assistant"):
         # Delete from OpenAI
         if not assistant_id.startswith("asst_"):
             st.warning("Not saved yet.")
             st.stop()
+        # Deregister to used prompt and functions
+        metadata = configuration["metadata"]
+        prompt_id = metadata["prompt_id"]
+        prompt_name = app_state.prompts[prompt_id]
+        item = PromptsTable.get(prompt_id, prompt_name)
+        item.update(
+            actions=[PromptsTable.used_by.set(item.used_by.remove(assistant_id))]
+        )
+
+        for key, val in metadata.items():
+            if not key.startswith("function_"):
+                continue
+            function_name = app_state.functions[val]
+            item = FunctionsTable.get(val, function_name)
+            item.update(
+                actions=[FunctionsTable.used_by.set(item.used_by.remove(assistant_id))]
+            )
+
         app_state.openai_client.beta.assistants.delete(assistant_id)
         # Delete from app_state.assistants
         del app_state.assistants[assistant_id]

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from dataclasses import field
 import streamlit as st
 from code_editor import code_editor
+from pynamodb.exceptions import DoesNotExist
 from ai_stream import TESTING
 from ai_stream.db.aws import FunctionsTable
 from ai_stream.utils import create_id
@@ -71,7 +72,7 @@ def load_from_json_schema(schema: str | dict) -> dict:
 
 def new_function() -> dict:
     """Create and return a new function."""
-    return {"name": "New Function", "description": "", "parameters": {}}
+    return {"name": "NewFunction", "description": "", "parameters": {}}
 
 
 def add_function(app_state: AppState) -> None:
@@ -209,12 +210,21 @@ def select_function(functions: dict) -> tuple:
 def get_function(app_state: AppState, function_id: str, function_name: str) -> dict:
     """Get the function dict given its ID."""
     if app_state.current_function.get("id", "") != function_id:  # Needs reloading
-        item = FunctionsTable.get(function_id, function_name)
+        try:
+            item = FunctionsTable.get(function_id, function_name)
+        except DoesNotExist:
+            item = None
         if item:
             app_state.current_function = load_from_json_schema(item.value.as_dict())
-            app_state.current_function["id"] = function_id
+
+            st.subheader("Used By:")
+            if item.used_by:
+                for asst in item.used_by:
+                    st.write(f"`{asst}`")
+
         else:
             app_state.current_function = new_function()
+        app_state.current_function["id"] = function_id
 
     stored_function = app_state.current_function
     if st.checkbox("Expert Mode"):
@@ -298,11 +308,41 @@ def main(app_state: AppState) -> None:
     st.code(json_schema, language="json")
 
     if st.button("Save Function"):
-        item = FunctionsTable(
-            id=function_id, name=selected_function["name"], value=schema
-        )
-        item.save()
-        st.success("Saved to DB.")
+        try:
+            existing_function = FunctionsTable.get(function_id, new_name)
+        except DoesNotExist:
+            existing_function = None
+        if existing_function:
+            existing_function.update(actions=[FunctionsTable.value.set(schema)])
+
+            if existing_function.used_by:
+                for assistant_id in existing_function.used_by:
+                    assistant = app_state.openai_client.beta.assistants.retrieve(
+                        assistant_id
+                    )
+                    tools = [
+                        tool.to_dict()
+                        for tool in assistant.tools
+                        if tool.function.name != function_name
+                    ]  # Remove old function
+                    tools.append({"type": "function", "function": schema})
+                    app_state.openai_client.beta.assistants.update(
+                        assistant_id, tools=tools
+                    )
+            st.success(
+                f"Function has been saved with name {new_name} and "
+                f"ID {function_id}."
+            )
+        else:
+            item = FunctionsTable(
+                id=function_id, name=new_name, used_by=[], value=schema
+            )
+            item.save()
+            st.success(
+                f"Function has been saved with name {new_name} and "
+                f"ID {function_id}."
+            )
+        app_state.functions[function_id] = new_name
 
     # Option to remove the function
     if st.button("Remove Function"):
