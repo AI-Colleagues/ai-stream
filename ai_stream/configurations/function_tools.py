@@ -123,7 +123,7 @@ def build_json_schema(
 def add_parameter(selected_function: dict) -> None:
     """Add a parameter to the given function."""
     new_id = create_id()
-    kwargs = {
+    fields = {
         "name": "",
         "description": "",
         "type": "string",
@@ -131,7 +131,7 @@ def add_parameter(selected_function: dict) -> None:
         "enum": [],  # For enum values
         "items_type": "string",  # Default item type for arrays
     }
-    new_param = FunctionParameter(**kwargs)
+    new_param = FunctionParameter(**fields)  # type: ignore[arg-type]
     selected_function["parameters"][new_id] = new_param
 
 
