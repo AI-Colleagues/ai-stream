@@ -11,12 +11,19 @@ from ai_stream.config import get_logger
 from ai_stream.config import load_config
 
 
-PYNAMODB_TABLES: dict[str, type[Model]] = {}
+class AIStreamTable(Model):
+    """Base table model."""
+
+    id = UnicodeAttribute(hash_key=True)
+    name = UnicodeAttribute(range_key=True)
+
+
+PYNAMODB_TABLES: dict[str, type[AIStreamTable]] = {}
 logger = get_logger(__name__)
 config = load_config()
 
 
-def register_pynamodb_table(cls: type[Model]) -> type[Model]:
+def register_pynamodb_table(cls: type[AIStreamTable]) -> type[AIStreamTable]:
     """Register a PynamoDB table."""
     PYNAMODB_TABLES[cls.__name__] = cls
     return cls
@@ -29,7 +36,7 @@ class DefaultTableMeta:
 
 
 @register_pynamodb_table
-class PromptsTable(Model):
+class PromptsTable(AIStreamTable):
     """Table for storing prompts."""
 
     class Meta(DefaultTableMeta):
@@ -37,13 +44,11 @@ class PromptsTable(Model):
 
         table_name = config.dynamodb.prompts_table
 
-    id = UnicodeAttribute(hash_key=True)
-    name = UnicodeAttribute(range_key=True)
     value = UnicodeAttribute()
 
 
 @register_pynamodb_table
-class FunctionsTable(Model):
+class FunctionsTable(AIStreamTable):
     """Table for storing prompts."""
 
     class Meta(DefaultTableMeta):
@@ -51,8 +56,6 @@ class FunctionsTable(Model):
 
         table_name = config.dynamodb.functions_table
 
-    id = UnicodeAttribute(hash_key=True)
-    name = UnicodeAttribute(range_key=True)
     value: MapAttribute[str, Any] = MapAttribute()
 
 

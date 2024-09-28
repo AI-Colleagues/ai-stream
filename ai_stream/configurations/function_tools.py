@@ -69,27 +69,22 @@ def load_from_json_schema(schema: str | dict) -> dict:
     return function_dict
 
 
-def load_functions(app_state: AppState) -> None:
-    """Load functions from DB."""
-    if app_state.function_tools:  # Already loaded
-        return
-    items = FunctionsTable.scan()
-    functions = {item.id: load_from_json_schema(item.value.as_dict()) for item in items}
-    app_state.function_tools.update(functions)
+def new_function() -> dict:
+    """Create and return a new function."""
+    return {"name": "New Function", "description": "", "parameters": {}}
 
 
 def add_function(app_state: AppState) -> None:
     """Add a new function."""
     new_id = create_id()
-    new_function = {"name": "New Function", "description": "", "parameters": {}}
-    app_state.function_tools = OrderedDict(
-        [(new_id, new_function)] + list(app_state.function_tools.items())
+    app_state.functions = OrderedDict(
+        [(new_id, new_function()["name"])] + list(app_state.functions.items())
     )
 
 
 def remove_function(app_state: AppState, function_id: str, function_name: str) -> None:
     """Remove the given function."""
-    del app_state.function_tools[function_id]
+    del app_state.functions[function_id]
     item = FunctionsTable.get(function_id, function_name)
     item.delete()
 
@@ -194,32 +189,34 @@ def parameter_input(param: FunctionParameter, param_id: str) -> FunctionParamete
     )
 
 
-def select_function(app_state: AppState) -> str:
+def select_function(functions: dict) -> tuple:
     """Select a function to edit and return its id."""
-    load_functions(app_state)
-
-    if not app_state.function_tools:
-        st.write("No functions available. Click 'New Function' to create one.")
+    if not functions:
+        st.warning("No functions yet. Click 'New Function' to create one.")
         st.stop()
-
-    function_id2name = {
-        func_id: func["name"] for func_id, func in app_state.function_tools.items()
-    }
 
     function_id = st.sidebar.selectbox(
         "Select Function",
-        options=function_id2name,
-        format_func=lambda x: function_id2name[x],
+        options=functions,
+        format_func=lambda x: functions[x],
         key="function_selectbox",
     )
     st.sidebar.caption(f"ID: {function_id}")
 
-    return function_id
+    return function_id, functions[function_id]
 
 
-def get_function(app_state: AppState, function_id: str) -> dict:
+def get_function(app_state: AppState, function_id: str, function_name: str) -> dict:
     """Get the function dict given its ID."""
-    stored_function = app_state.function_tools[function_id]
+    if app_state.current_function.get("id", "") != function_id:  # Needs reloading
+        item = FunctionsTable.get(function_id, function_name)
+        if item:
+            app_state.current_function = load_from_json_schema(item.value.as_dict())
+            app_state.current_function["id"] = function_id
+        else:
+            app_state.current_function = new_function()
+
+    stored_function = app_state.current_function
     if st.checkbox("Expert Mode"):
         _, current_schema = build_json_schema(
             stored_function["name"],
@@ -279,13 +276,12 @@ def main(app_state: AppState) -> None:
     if st.button("New Function"):
         add_function(app_state)
 
-    function_id = select_function(app_state)
+    function_id, function_name = select_function(app_state.functions)
 
     # Now get the selected function
-    selected_function = get_function(app_state, function_id)
+    selected_function = get_function(app_state, function_id, function_name)
 
     # Display function
-
     new_name, new_description, updated_parameters = display_function(
         selected_function, function_id
     )

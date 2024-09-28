@@ -4,6 +4,8 @@ import streamlit as st
 from ai_stream import TESTING
 from ai_stream.db.aws import PromptsTable
 from ai_stream.utils import create_id
+from ai_stream.utils.app_state import AppState
+from ai_stream.utils.app_state import ensure_app_state
 
 
 def edit_prompt(prompt: str, prompt_name: str, prompt_id: str) -> None:
@@ -27,13 +29,14 @@ def review_prompt(prompt: str) -> None:
     st.markdown(prompt)
 
 
-def main() -> None:
+@ensure_app_state
+def main(app_state: AppState) -> None:
     """Main layout."""
+    st.title("OpenAI Prompts")
     # Get all prompt names and ids from DB
-    items = PromptsTable.scan(attributes_to_get=["id", "name"])
-    prompt_id2name = {prompt.id: prompt.name for prompt in items}
+    prompt_id2name = app_state.prompts
     prompt_id = st.sidebar.selectbox(
-        "Prompts", prompt_id2name, format_func=lambda x: prompt_id2name[x]
+        "Select Prompt", prompt_id2name, format_func=lambda x: prompt_id2name[x]
     )
     # Get selected prompt from DB
     if not prompt_id:
