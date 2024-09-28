@@ -34,6 +34,8 @@ class AppState:
         """The latest tool output if any."""
         self.current_function: dict = {}
         """Current function being edited."""
+        self.current_assistant: dict = {}
+        """Current assistant being edited."""
         # self.function_tools: dict[str, dict] = OrderedDict()
         # """Cache for function_tools."""
 

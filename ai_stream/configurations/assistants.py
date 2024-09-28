@@ -3,44 +3,90 @@
 import json
 from typing import Any
 import streamlit as st
+from pynamodb.exceptions import DoesNotExist
 from ai_stream import TESTING
 from ai_stream.config import load_config
+from ai_stream.db.aws import AssistantsTable
+from ai_stream.utils.app_state import AppState
+from ai_stream.utils.app_state import ensure_app_state
 
 
 config = load_config()
 
 
-def setup_configuration_widgets() -> dict[str, Any]:
-    """Configuration widgets in the sidebar for configuring OpenAI Assistants."""
-    st.sidebar.header("Configuration")
+def new_assistant() -> dict:
+    """Return defaults for a new assistant."""
+    return {
+        "assistant_name": "New Assistant",
+        "system_instructions": "You are a helpful assistant.",
+        "model": "gpt-4o-mini",
+        "temperature": 0.7,
+        "top_p": 1.0,
+        "file_search_enabled": False,
+        "code_interpreter_enabled": False,
+        "custom_function_enabled": False,
+        "function_schema": None,
+        "response_format_option": "Text",
+        "json_schema": None,
+    }
 
+
+def setup_configuration_widgets(
+    app_state: AppState, assistant_id: str, assistant_name: str
+) -> dict[str, Any]:
+    """Configuration widgets in the sidebar for configuring OpenAI Assistants."""
+    if app_state.current_assistant.get("id", "") != assistant_id:
+        try:
+            item = AssistantsTable.get(assistant_id, assistant_name)
+            app_state.current_assistant = item.value.as_dict()
+            app_state.current_assistant["id"] = assistant_id
+        except DoesNotExist:
+            app_state.current_assistant = new_assistant()
+
+    selected_assistant = app_state.current_assistant
     # Assistant name
-    assistant_name: str = st.sidebar.text_input("Assistant Name", value="Assistant")
+    new_assistant_name: str = st.sidebar.text_input(
+        "Assistant Name", value=selected_assistant["assistant_name"]
+    )
 
     # System instructions
     system_instructions: str = st.sidebar.text_area(
-        "System Instructions", value="You are a helpful assistant."
+        "System Instructions", value=selected_assistant["system_instructions"]
     )
 
     # Model selection
-    model: str = st.sidebar.selectbox("Model", options=list(config.models))
+    models = list(config.models)
+    default_ind = models.index(selected_assistant["model"])
+    model: str = st.sidebar.selectbox("Model", options=models, index=default_ind)
 
     # Temperature
     temperature: float = st.sidebar.slider(
-        "Temperature", min_value=0.0, max_value=1.0, value=0.7
+        "Temperature",
+        min_value=0.0,
+        max_value=1.0,
+        value=selected_assistant["temperature"],
     )
 
     # Top-p
-    top_p: float = st.sidebar.slider("Top-p", min_value=0.0, max_value=1.0, value=1.0)
+    top_p: float = st.sidebar.slider(
+        "Top-p", min_value=0.0, max_value=1.0, value=selected_assistant["top_p"]
+    )
 
     # Add toggles for file search and code interpreter
     st.sidebar.subheader("Tools")
-    file_search_enabled: bool = st.sidebar.checkbox("Enable File Search")
-    code_interpreter_enabled: bool = st.sidebar.checkbox("Enable Code Interpreter")
+    file_search_enabled: bool = st.sidebar.checkbox(
+        "Enable File Search", value=selected_assistant["file_search_enabled"]
+    )
+    code_interpreter_enabled: bool = st.sidebar.checkbox(
+        "Enable Code Interpreter", value=selected_assistant["code_interpreter_enabled"]
+    )
 
     # Add input for custom function schema when requested
     st.sidebar.subheader("Custom Function Schema")
-    custom_function_enabled: bool = st.sidebar.checkbox("Enable Custom Function Schema")
+    custom_function_enabled: bool = st.sidebar.checkbox(
+        "Enable Custom Function Schema",
+        value=selected_assistant["custom_function_enabled"],
+    )
 
     function_schema: dict[str, Any] | None = None
     if custom_function_enabled:
@@ -56,8 +102,10 @@ def setup_configuration_widgets() -> dict[str, Any]:
 
     # Add options for response format
     st.sidebar.subheader("Response Format")
+    resp_format = ["Text", "JSON Object", "JSON Schema"]
+    default_ind = resp_format.index(selected_assistant["response_format_option"])
     response_format_option: str = st.sidebar.selectbox(
-        "Response Format", options=["Text", "JSON Object", "JSON Schema"]
+        "Response Format", options=resp_format, index=default_ind
     )
 
     json_schema: dict[str, Any] | None = None
@@ -72,7 +120,7 @@ def setup_configuration_widgets() -> dict[str, Any]:
 
     # Return the configuration as a dictionary
     configuration: dict[str, Any] = {
-        "assistant_name": assistant_name,
+        "assistant_name": new_assistant_name,
         "system_instructions": system_instructions,
         "model": model,
         "temperature": temperature,
@@ -87,10 +135,25 @@ def setup_configuration_widgets() -> dict[str, Any]:
     return configuration
 
 
-def main() -> None:
+def select_assistant(assistants: dict) -> tuple:
+    """Select assistant and return its ID and name."""
+    if not assistants:
+        st.warning("No assistants yet. Click 'New Assistant' to create one.")
+        st.stop()
+
+    assistant_id = st.sidebar.selectbox(
+        "Select Assistant", options=assistants, format_func=lambda x: assistants[x]
+    )
+
+    return assistant_id, assistants[assistant_id]
+
+
+@ensure_app_state
+def main(app_state: AppState) -> None:
     """Main function to run the Streamlit app."""
-    st.title("🤖 OpenAI Assistant Configuration")
-    configuration = setup_configuration_widgets()
+    st.title("OpenAI Assistant Configuration")
+    assistant_id, assistant_name = select_assistant(app_state.assistants)
+    configuration = setup_configuration_widgets(app_state, assistant_id, assistant_name)
 
     # Display the current configuration for demonstration purposes
     st.subheader("Current Configuration")

@@ -192,7 +192,7 @@ def parameter_input(param: FunctionParameter, param_id: str) -> FunctionParamete
 def select_function(functions: dict) -> tuple:
     """Select a function to edit and return its id."""
     if not functions:
-        st.write("No functions available. Click 'New Function' to create one.")
+        st.warning("No functions yet. Click 'New Function' to create one.")
         st.stop()
 
     function_id = st.sidebar.selectbox(
