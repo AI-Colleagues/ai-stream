@@ -42,7 +42,7 @@ class MainPage(AppPage):
 class PromptsPage(AppPage):
     """Prompts page."""
 
-    group: str = "Configurations"
+    group: str = "Assistant Assembly"
     page: StreamlitPage = st.Page(
         "configurations/prompts.py", title="Prompts", icon="📝"
     )
@@ -53,7 +53,7 @@ class PromptsPage(AppPage):
 class FunctionToolsPage(AppPage):
     """Function tools page."""
 
-    group: str = "Configurations"
+    group: str = "Assistant Assembly"
     page: StreamlitPage = st.Page(
         "configurations/function_tools.py", title="Function Tools", icon="🛠️"
     )
@@ -64,7 +64,7 @@ class FunctionToolsPage(AppPage):
 class AssistantsPage(AppPage):
     """Main page."""
 
-    group: str = "Configurations"
+    group: str = "Assistant Assembly"
     page: StreamlitPage = st.Page(
         "configurations/assistants.py", title="Assistants", icon="🤖"
     )
