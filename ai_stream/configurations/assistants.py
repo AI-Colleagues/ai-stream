@@ -30,7 +30,7 @@ def new_assistant() -> dict:
         "code_interpreter_enabled": False,
         "custom_function_enabled": False,
         "function_schema": None,
-        "response_format": "Text",
+        "response_format": "text",
         "json_schema": None,
     }
 
@@ -117,14 +117,14 @@ def setup_configuration_widgets(
 
     # Add options for response format
     st.sidebar.subheader("Response Format")
-    resp_format = ["Text", "JSON Object", "JSON Schema"]
+    resp_format = ["text", "json_object", "json_schema"]
     default_ind = resp_format.index(selected_assistant["response_format"])
     response_format_option: str = st.sidebar.selectbox(
         "Response Format", options=resp_format, index=default_ind
     )
 
     json_schema: dict[str, Any] | None = None
-    if response_format_option == "JSON Schema":
+    if response_format_option == "json_schema":
         json_schema_str: str = st.sidebar.text_area("JSON Schema", value="")
         # Parse the JSON schema
         try:
@@ -133,7 +133,7 @@ def setup_configuration_widgets(
         except json.JSONDecodeError:
             st.sidebar.error("Invalid JSON in JSON Schema")
     else:
-        response_format = response_format_option
+        response_format = {"type": response_format_option}
 
     # Return the configuration as a dictionary
     configuration: dict[str, Any] = {
@@ -188,10 +188,12 @@ def main(app_state: AppState) -> None:
 
     if st.button("Save Assistant"):
         # Save to OpenAI
-        if assistant_id.starts_with("asst_"):  # Update
+        if assistant_id.startswith("asst_"):  # Update
             pass
         else:
-            app_state.openai_client.beta.assistants.create(**configuration)
+            assistant = app_state.openai_client.beta.assistants.create(**configuration)
+            app_state.assistants[assistant.id] = configuration["name"]
+        st.success(f"Assistant {assistant.id} saved!")
         # Save to app_state.assistants
         # Save to AssistantsTable
 
