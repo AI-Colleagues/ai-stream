@@ -4,6 +4,9 @@ import json
 from collections import OrderedDict
 from typing import Any
 import streamlit as st
+from openai.types import ResponseFormatJSONObject
+from openai.types import ResponseFormatJSONSchema
+from openai.types import ResponseFormatText
 from openai.types.beta import CodeInterpreterTool
 from openai.types.beta import FileSearchTool
 from openai.types.beta import FunctionTool
@@ -36,12 +39,21 @@ def new_assistant() -> dict:
     }
 
 
-def retrieve_assistant(app_state: AppState, assistant_id: str):
+def retrieve_assistant(app_state: AppState, assistant_id: str) -> dict:
     """Retrieve assistant from OpenAI."""
+    assert app_state.openai_client
     asst = app_state.openai_client.beta.assistants.retrieve(assistant_id)
     function_ids = [
-        val for key, val in asst.metadata.items() if key.startswith("function_")
+        val
+        for key, val in asst.metadata.items()  # type: ignore[attr-defined]
+        if key.startswith("function_")
     ]
+    response_format = "text"
+    if isinstance(
+        response_format,
+        ResponseFormatText | ResponseFormatJSONObject | ResponseFormatJSONSchema,
+    ):
+        response_format = asst.response_format.type
     return {
         "name": asst.name,
         "instructions": asst.instructions,
@@ -58,7 +70,7 @@ def retrieve_assistant(app_state: AppState, assistant_id: str):
             isinstance(tool, FunctionTool) for tool in asst.tools
         ),
         "function_ids": function_ids,
-        "response_format": asst.response_format.type,
+        "response_format": response_format,
         "json_schema": None,  # TODO
     }
 
@@ -215,24 +227,28 @@ def main(app_state: AppState) -> None:
     st.subheader("Current Configuration")
     st.code(json.dumps(configuration, indent=4), language="json")
 
+    assert app_state.openai_client
     if st.button("Save Assistant"):
         # Save to OpenAI
         if assistant_id.startswith("asst_"):  # Update
-            # TODO
-            pass
+            assistant = app_state.openai_client.beta.assistants.update(
+                assistant_id, **configuration
+            )
         else:
             assistant = app_state.openai_client.beta.assistants.create(**configuration)
-            app_state.assistants[assistant.id] = configuration["name"]
-        st.success(f"Assistant {assistant.id} saved!")
         # Save to app_state.assistants
-        # Save to AssistantsTable
+        app_state.assistants[assistant.id] = configuration["name"]
+        st.success(f"Assistant {assistant.id} saved!")
 
     if st.button("Delete Assistant"):
         # Delete from OpenAI
+        if not assistant_id.startswith("asst_"):
+            st.warning("Not saved yet.")
+            st.stop()
+        app_state.openai_client.beta.assistants.delete(assistant_id)
         # Delete from app_state.assistants
-        # Delete from AssistantsTable
-        # TODO
-        pass
+        del app_state.assistants[assistant_id]
+        st.success(f"Assistant {assistant_id} deleted.")
 
 
 if not TESTING:
