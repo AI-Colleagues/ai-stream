@@ -1,11 +1,27 @@
 [build-system]
-build-backend = "hatchling.build"
-requires = ["hatchling>=1.8.0", "hatch-vcs"]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.5.0"]
 
-[project]
-authors = [
-  {name = "AI Colleagues", email = "info@ai-colleagues.com"}
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "@overload",
+  "if TYPE_CHECKING:",
+  "if typing.TYPE_CHECKING:"
 ]
+
+[tool.coverage.run]
+branch = true
+command_line = "-m pytest"
+source = ["ai_stream"]
+
+[tool.mypy]
+disallow_untyped_defs = true
+ignore_missing_imports = true
+python_version = "3.10"
+
+[tool.poetry]
+authors = ["AI Colleagues <info@ai-colleagues.com>"]
 classifiers = [
   "Natural Language :: English",
   "Operating System :: OS Independent",
@@ -13,27 +29,30 @@ classifiers = [
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.12"
 ]
-dependencies = [
-  "streamlit==1.38.0",
-  "streamlit_code_editor==0.1.21",
-  "langchain==0.2.3",
-  "langchain-core==0.2.5",
-  "openai==1.50.2",
-  "python-dotenv==1.0.1",
-  "pynamodb==6.0.1",
-  "hydra-core==1.3.2",
-  "moto==5.0.15",
-  "moto[server]",
-  "watchdog"
-]
 description = "An LLM-powered AI agent with context-aware UI. All you need to do is to give your instructions and follow the instructions."
-dynamic = ["version"]
+documentation = ""
+homepage = ""
 keywords = ["AI", "AI Agent"]
+license = ""  # Specify your license here
 name = "ai-stream"
 readme = "README.md"
-requires-python = ">=3.10"
+repository = ""
+version = "0.1.0"
 
-[project.optional-dependencies]
+[tool.poetry.dependencies]
+hydra-core = "1.3.2"
+langchain = "0.2.3"
+langchain-core = "0.2.5"
+moto = {version = "5.0.15", extras = ["server"]}
+openai = "1.50.2"
+pynamodb = "6.0.1"
+python = ">=3.10"
+python-dotenv = "1.0.1"
+streamlit = "1.38.0"
+streamlit_code_editor = "0.1.21"
+watchdog = "*"
+
+[tool.poetry.extras]
 dev = [
   "bump2version",
   "hatch",
@@ -54,65 +73,19 @@ docs = [
   "mkdocs-gen-files"
 ]
 
-[tool.coverage.report]
-exclude_lines = [
-  "pragma: no cover",
-  "@overload",
-  "if TYPE_CHECKING:",
-  "if typing.TYPE_CHECKING:"
-]
-
-[tool.coverage.run]
-branch = true
-command_line = "-m pytest"
-source = ["ai_stream"]
-
-[tool.hatch.build.targets.sdist]
-exclude = [
-  "/.mypy_cache",
-  "/.pytest_cache",
-  "/.githooks"
-]
-
-[tool.hatch.build.targets.wheel]
-packages = ["ai_stream"]
-
-[tool.hatch.envs.default]
-features = ["dev", "docs"]
-
-[tool.hatch.envs.default.scripts]
-coverage = [
-  "pytest --cov --cov-report term-missing --cov-report xml --junitxml=xunit-result.xml tests/"
-]
-format = [
-  "ruff format ai_stream/ tests/",
-  "ruff check ai_stream/ tests/ --fix",
-  "lint"
-]
-lint = [
-  "ruff check ai_stream/ tests/",
-  "mypy ai_stream/",
-  "ruff format ai_stream/ tests/ --check"
-]
-test = ["pytest tests/ --doctest-modules --doctest-ignore-import-errors"]
-
-[tool.hatch.envs.docs]
-features = ["docs"]
-
-[tool.hatch.envs.docs.scripts]
-build = ["mkdocs build"]
-serve = ["mkdocs serve"]
-
-[tool.hatch.publish.index]
-disable = true  # Requires confirmation when publishing to pypi.
-
-[tool.hatch.version]
-path = "ai_stream/__init__.py"
-
-[tool.mypy]
-disallow_untyped_defs = true
-ignore_missing_imports = true
-python_version = "3.10"
+[tool.poetry.scripts]
+coverage = "pytest --cov --cov-report term-missing --cov-report xml --junitxml=xunit-result.xml tests/"
+format = """
+    ruff format ai_stream/ tests/
+    ruff check ai_stream/ tests/ --fix
+    lint
+"""
+lint = """
+    ruff check ai_stream/ tests/
+    mypy ai_stream/
+    ruff format ai_stream/ tests/ --check
+"""
+test = "pytest tests/ --doctest-modules --doctest-ignore-import-errors"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -120,34 +93,33 @@ testpaths = ["tests"]
 [tool.ruff]
 exclude = ["docs", "build"]
 line-length = 88
-# Allow unused variables when underscore-prefixed.
 target-version = "py310"
 
 [tool.ruff.lint]
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 extend-select = [
-  "D401",  # First line should be in imperative mood
-  "D400",  # First line should end in a period.
-  "D404",  # First word of the docstring should not be 'This'
-  "TID252"  # No relative imports (not pep8 compliant)
+  "D401",
+  "D400",
+  "D404",
+  "TID252"
 ]
 ignore = [
-  "PLR2004",  # magic value used in comparsion (i.e. `if ndays == 28: month_is_feb`).
-  "PLR0913",  # too many arguments
-  "D401"  # first line of docstring should be in imperative mood
+  "PLR2004",
+  "PLR0913",
+  "D401"
 ]
 select = [
-  "E",  # pycodestyle
-  "F",  # pyflakes
-  "B",  # flake8-bugbear
-  "D",  # pydocstyle
-  "C90",  # mccabe complexity
-  "I",  # isort
-  "N",  # PEP8-naming
-  "UP",  # pyupgrade (upgrade syntax to current syntax)
-  "PLE",  # Pylint error https://github.com/charliermarsh/ruff#error-ple
-  "PLR",  # Pylint refactor (e.g. too-many-arguments)
-  "PLW"  # Pylint warning (useless-else-on-loop)
+  "E",
+  "F",
+  "B",
+  "D",
+  "C90",
+  "I",
+  "N",
+  "UP",
+  "PLE",
+  "PLR",
+  "PLW"
 ]
 
 [tool.ruff.lint.isort]
