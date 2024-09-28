@@ -1,6 +1,5 @@
 """Configuration page for function tools."""
 
-import copy
 import json
 from dataclasses import dataclass
 from dataclasses import field
@@ -123,7 +122,7 @@ def build_json_schema(
 def add_parameter(selected_function: dict) -> None:
     """Add a parameter to the given function."""
     new_id = create_id()
-    new_param = {
+    kwargs = {
         "name": "",
         "description": "",
         "type": "string",
@@ -131,6 +130,7 @@ def add_parameter(selected_function: dict) -> None:
         "enum": [],  # For enum values
         "items_type": "string",  # Default item type for arrays
     }
+    new_param = FunctionParameter(**kwargs)
     selected_function["parameters"][new_id] = new_param
 
 
@@ -139,46 +139,52 @@ def remove_parameter(selected_function: dict, param_id: str) -> None:
     del selected_function["parameters"][param_id]
 
 
-def parameter_input(
-    selected_function: dict, param: FunctionParameter, param_id: str
-) -> None:
+def parameter_input(param: FunctionParameter, param_id: str) -> FunctionParameter:
     """Display the input widgets for the given parameter."""
-    param.name = st.text_input("Name", value=param.name, key=f"name_{param_id}")
-    param.description = st.text_input(
+    new_name = st.text_input("Name", value=param.name, key=f"name_{param_id}")
+    new_description = st.text_input(
         "Description",
         value=param.description,
         key=f"description_{param_id}",
     )
-    param.type = st.selectbox(
+    new_type = st.selectbox(
         "Type",
         options=PARAM_TYPES,
         index=param.type_index,
         key=f"type_{param_id}",
     )
-    param.required = st.checkbox(
+    new_required = st.checkbox(
         "Required", value=param.required, key=f"required_{param_id}"
     )
     # For enum
-    if param.type in ["string", "number", "integer"]:
+    if new_type in ["string", "number", "integer"]:
         enum_input = st.text_input(
             "Enum values (comma-separated)",
             value=", ".join(param.enum),
             key=f"enum_{param_id}",
         )
         # Convert the comma-separated string to a list
-        param.enum = [e.strip() for e in enum_input.split(",")] if enum_input else []
+        new_enum = [e.strip() for e in enum_input.split(",")] if enum_input else []
+    else:
+        new_enum = []
     # For array item type
-    if param.type == "array":
-        param.items_type = st.selectbox(
+    if new_type == "array":
+        new_items_type = st.selectbox(
             "Item Type",
             options=PARAM_TYPES,
             index=param.items_type_index,
             key=f"items_type_{param_id}",
         )
-    # Remove button for the parameter
-    if st.button("Remove Parameter", key=f"remove_{param_id}"):
-        remove_parameter(selected_function, param_id)
-        st.rerun()  # Rerun the app to reflect changes
+    else:
+        new_items_type = "string"
+    return FunctionParameter(
+        name=new_name,
+        description=new_description,
+        type=new_type,
+        required=new_required,
+        enum=new_enum,
+        items_type=new_items_type,
+    )
 
 
 @ensure_app_state
@@ -212,12 +218,12 @@ def main(app_state: AppState) -> None:
     selected_function = app_state.function_tools[function_id]
 
     # Function Name and Description
-    selected_function["name"] = st.text_input(
+    new_name = st.text_input(
         "Function Name",
         value=selected_function.get("name", ""),
         key=f"function_name_{function_id}",
     )
-    selected_function["description"] = st.text_area(
+    new_description = st.text_area(
         "Function Description",
         value=selected_function.get("description", ""),
         key=f"function_description_{function_id}",
@@ -230,16 +236,21 @@ def main(app_state: AppState) -> None:
         add_parameter(selected_function)
 
     # Display each parameter
+    updated_parameters = {}
     for param_id, param in selected_function["parameters"].items():
         with st.expander(f"Parameter: {param.name or 'Unnamed'}", expanded=True):
-            parameter_input(selected_function, param, param_id)
+            output_param = parameter_input(param, param_id)
+            updated_parameters[param_id] = output_param
+            # Remove button for the parameter
+            if st.button("Remove Parameter", key=f"remove_{param_id}"):
+                remove_parameter(selected_function, param_id)
+                st.rerun()  # Rerun the app to reflect changes
 
-    function = copy.deepcopy(selected_function)
     # Build the JSON schema using the function
     json_schema = build_json_schema(
-        function["name"],
-        function["description"],
-        function["parameters"],
+        new_name,
+        new_description,
+        updated_parameters,
     )
 
     st.header("Generated JSON Schema")
