@@ -1,8 +1,10 @@
 """Definitions of app specific states."""
 
+import os
 from collections.abc import Callable
 from functools import wraps
 from typing import Any
+from openai import OpenAI
 from streamlit import session_state
 from ai_stream.db.aws import PYNAMODB_TABLES
 
@@ -36,8 +38,8 @@ class AppState:
         """Current function being edited."""
         self.current_assistant: dict = {}
         """Current assistant being edited."""
-        # self.function_tools: dict[str, dict] = OrderedDict()
-        # """Cache for function_tools."""
+        self.openai_client: OpenAI | None = None
+        """OpenAI client."""
 
 
 def ensure_app_state(func: Callable) -> Callable:
@@ -47,6 +49,8 @@ def ensure_app_state(func: Callable) -> Callable:
     def wrapper(*args: list, **kwargs: dict) -> Any:
         if "app_state" not in session_state:
             app_state = AppState()
+            project_id = os.environ.get("PROJECT_ID", None)
+            app_state.openai_client = OpenAI(project=project_id)
             # Load IDs and names from DB
             for table_cls in PYNAMODB_TABLES.values():
                 items = table_cls.scan(attributes_to_get=["id", "name"])

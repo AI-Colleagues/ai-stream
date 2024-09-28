@@ -21,8 +21,8 @@ config = load_config()
 def new_assistant() -> dict:
     """Return defaults for a new assistant."""
     return {
-        "assistant_name": "New Assistant",
-        "system_instructions": "You are a helpful assistant.",
+        "name": "New Assistant",
+        "instructions": "You are a helpful assistant.",
         "model": "gpt-4o-mini",
         "temperature": 0.7,
         "top_p": 1.0,
@@ -30,7 +30,7 @@ def new_assistant() -> dict:
         "code_interpreter_enabled": False,
         "custom_function_enabled": False,
         "function_schema": None,
-        "response_format_option": "Text",
+        "response_format": "Text",
         "json_schema": None,
     }
 
@@ -48,9 +48,10 @@ def setup_configuration_widgets(
             app_state.current_assistant = new_assistant()
 
     selected_assistant = app_state.current_assistant
+    metadata = {}
     # Assistant name
-    new_assistant_name: str = st.sidebar.text_input(
-        "Assistant Name", value=selected_assistant["assistant_name"]
+    new_name: str = st.sidebar.text_input(
+        "Assistant Name", value=selected_assistant["name"]
     )
 
     # System instructions
@@ -59,6 +60,7 @@ def setup_configuration_widgets(
         "Select Prompt", options=prompts, format_func=lambda x: prompts[x]
     )
     system_instructions = PromptsTable.get(prompt_id, prompts[prompt_id]).value
+    metadata["prompt_id"] = prompt_id
 
     # Model selection
     models = list(config.models)
@@ -80,34 +82,43 @@ def setup_configuration_widgets(
 
     # Add toggles for file search and code interpreter
     st.sidebar.subheader("Tools")
+    tools = []
     file_search_enabled: bool = st.sidebar.checkbox(
         "Enable File Search", value=selected_assistant["file_search_enabled"]
     )
+    if file_search_enabled:
+        tools.append({"type": "file_search"})
+
     code_interpreter_enabled: bool = st.sidebar.checkbox(
         "Enable Code Interpreter", value=selected_assistant["code_interpreter_enabled"]
     )
+    if code_interpreter_enabled:
+        tools.append({"type": "code_interpreter"})
 
     # Add input for custom function schema when requested
-    st.sidebar.subheader("Custom Function Schema")
     custom_function_enabled: bool = st.sidebar.checkbox(
         "Enable Custom Function Schema",
         value=selected_assistant["custom_function_enabled"],
     )
 
-    function_schema: dict[str, Any] | None = None
     if custom_function_enabled:
         functions = app_state.functions
-        function_id = st.sidebar.selectbox(
+        function_ids = st.sidebar.multiselect(
             "Select Function", options=functions, format_func=lambda x: functions[x]
         )
-        function_schema = FunctionsTable.get(
-            function_id, functions[function_id]
-        ).value.as_dict()
+        items = FunctionsTable.batch_get([(id, functions[id]) for id in function_ids])
+        tools.extend(
+            [
+                {"type": "function", "function": schema.value.as_dict()}
+                for schema in items
+            ]
+        )
+        metadata.update({f"function_{i}": id for i, id in enumerate(function_ids)})
 
     # Add options for response format
     st.sidebar.subheader("Response Format")
     resp_format = ["Text", "JSON Object", "JSON Schema"]
-    default_ind = resp_format.index(selected_assistant["response_format_option"])
+    default_ind = resp_format.index(selected_assistant["response_format"])
     response_format_option: str = st.sidebar.selectbox(
         "Response Format", options=resp_format, index=default_ind
     )
@@ -118,23 +129,22 @@ def setup_configuration_widgets(
         # Parse the JSON schema
         try:
             json_schema = json.loads(json_schema_str)
+            response_format = {"type": "json_schema", "json_schema": json_schema}
         except json.JSONDecodeError:
             st.sidebar.error("Invalid JSON in JSON Schema")
-            json_schema = None
+    else:
+        response_format = response_format_option
 
     # Return the configuration as a dictionary
     configuration: dict[str, Any] = {
-        "assistant_name": new_assistant_name,
-        "system_instructions": system_instructions,
+        "name": new_name,
+        "instructions": system_instructions,
         "model": model,
         "temperature": temperature,
         "top_p": top_p,
-        "file_search_enabled": file_search_enabled,
-        "code_interpreter_enabled": code_interpreter_enabled,
-        "custom_function_enabled": custom_function_enabled,
-        "function_schema": function_schema,
-        "response_format_option": response_format_option,
-        "json_schema": json_schema,
+        "tools": tools,
+        "response_format": response_format,
+        "metadata": metadata,
     }
     return configuration
 
@@ -157,8 +167,7 @@ def add_assistant(app_state: AppState) -> None:
     """Add a new assistant."""
     new_id = "tmp_" + create_id()
     app_state.assistants = OrderedDict(
-        [(new_id, new_assistant()["assistant_name"])]
-        + list(app_state.assistants.items())
+        [(new_id, new_assistant()["name"])] + list(app_state.assistants.items())
     )
 
 
@@ -179,9 +188,12 @@ def main(app_state: AppState) -> None:
 
     if st.button("Save Assistant"):
         # Save to OpenAI
+        if assistant_id.starts_with("asst_"):  # Update
+            pass
+        else:
+            app_state.openai_client.beta.assistants.create(**configuration)
         # Save to app_state.assistants
         # Save to AssistantsTable
-        pass
 
     if st.button("Delete Assistant"):
         # Delete from OpenAI
