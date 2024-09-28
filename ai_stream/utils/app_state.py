@@ -50,13 +50,19 @@ def ensure_app_state(func: Callable) -> Callable:
         if "app_state" not in session_state:
             app_state = AppState()
             project_id = os.environ.get("PROJECT_ID", None)
-            app_state.openai_client = OpenAI(project=project_id)
+            client = OpenAI(project=project_id)
+            app_state.openai_client = client
             # Load IDs and names from DB
             for table_cls in PYNAMODB_TABLES.values():
                 items = table_cls.scan(attributes_to_get=["id", "name"])
                 items_dict = {item.id: item.name for item in items}
                 table_name = table_cls.Meta.table_name
                 setattr(app_state, table_name, items_dict)
+
+            # Load assistants
+            # TODO: Add pagination in case number of assistants > 100
+            for asst in client.beta.assistants.list(limit=100):
+                app_state.assistants[asst.id] = asst.name
 
             session_state.app_state = app_state
 

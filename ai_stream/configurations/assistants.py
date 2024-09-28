@@ -4,10 +4,11 @@ import json
 from collections import OrderedDict
 from typing import Any
 import streamlit as st
-from pynamodb.exceptions import DoesNotExist
+from openai.types.beta import CodeInterpreterTool
+from openai.types.beta import FileSearchTool
+from openai.types.beta import FunctionTool
 from ai_stream import TESTING
 from ai_stream.config import load_config
-from ai_stream.db.aws import AssistantsTable
 from ai_stream.db.aws import FunctionsTable
 from ai_stream.db.aws import PromptsTable
 from ai_stream.utils import create_id
@@ -29,9 +30,36 @@ def new_assistant() -> dict:
         "file_search_enabled": False,
         "code_interpreter_enabled": False,
         "custom_function_enabled": False,
-        "function_schema": None,
+        "function_ids": [],
         "response_format": "text",
         "json_schema": None,
+    }
+
+
+def retrieve_assistant(app_state: AppState, assistant_id: str):
+    """Retrieve assistant from OpenAI."""
+    asst = app_state.openai_client.beta.assistants.retrieve(assistant_id)
+    function_ids = [
+        val for key, val in asst.metadata.items() if key.startswith("function_")
+    ]
+    return {
+        "name": asst.name,
+        "instructions": asst.instructions,
+        "model": asst.model,
+        "temperature": asst.temperature,
+        "top_p": asst.top_p,
+        "file_search_enabled": any(
+            isinstance(tool, FileSearchTool) for tool in asst.tools
+        ),
+        "code_interpreter_enabled": any(
+            isinstance(tool, CodeInterpreterTool) for tool in asst.tools
+        ),
+        "custom_function_enabled": any(
+            isinstance(tool, FunctionTool) for tool in asst.tools
+        ),
+        "function_ids": function_ids,
+        "response_format": asst.response_format.type,
+        "json_schema": None,  # TODO
     }
 
 
@@ -40,11 +68,9 @@ def setup_configuration_widgets(
 ) -> dict[str, Any]:
     """Configuration widgets in the sidebar for configuring OpenAI Assistants."""
     if app_state.current_assistant.get("id", "") != assistant_id:
-        try:
-            item = AssistantsTable.get(assistant_id, assistant_name)
-            app_state.current_assistant = item.value.as_dict()
-            app_state.current_assistant["id"] = assistant_id
-        except DoesNotExist:
+        if assistant_id.startswith("asst_"):
+            app_state.current_assistant = retrieve_assistant(app_state, assistant_id)
+        else:
             app_state.current_assistant = new_assistant()
 
     selected_assistant = app_state.current_assistant
@@ -104,7 +130,10 @@ def setup_configuration_widgets(
     if custom_function_enabled:
         functions = app_state.functions
         function_ids = st.sidebar.multiselect(
-            "Select Function", options=functions, format_func=lambda x: functions[x]
+            "Select Function",
+            options=functions,
+            format_func=lambda x: functions[x],
+            default=selected_assistant["function_ids"],
         )
         items = FunctionsTable.batch_get([(id, functions[id]) for id in function_ids])
         tools.extend(
