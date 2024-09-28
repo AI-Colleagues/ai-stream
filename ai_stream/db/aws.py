@@ -56,6 +56,20 @@ class FunctionsTable(Model):
     value: MapAttribute[str, Any] = MapAttribute()
 
 
+@register_pynamodb_table
+class AssistantsTable(Model):
+    """Table for storing assistant configs."""
+
+    class Meta(DefaultTableMeta):
+        """Table meta."""
+
+        table_name = config.dynamodb.assistants_table
+
+    id = UnicodeAttribute(hash_key=True)
+    name = UnicodeAttribute(range_key=True)
+    value: MapAttribute[str, Any] = MapAttribute()
+
+
 def _prepare_dev_env() -> None:
     os.environ["AWS_ACCESS_KEY_ID"] = "testing"
     os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
