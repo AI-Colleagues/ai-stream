@@ -1,12 +1,14 @@
 """Configuration page for assistants."""
 
 import json
+from collections import OrderedDict
 from typing import Any
 import streamlit as st
 from pynamodb.exceptions import DoesNotExist
 from ai_stream import TESTING
 from ai_stream.config import load_config
 from ai_stream.db.aws import AssistantsTable
+from ai_stream.utils import create_id
 from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
 
@@ -148,10 +150,23 @@ def select_assistant(assistants: dict) -> tuple:
     return assistant_id, assistants[assistant_id]
 
 
+def add_assistant(app_state: AppState) -> None:
+    """Add a new assistant."""
+    new_id = create_id()
+    app_state.assistants = OrderedDict(
+        [(new_id, new_assistant()["assistant_name"])]
+        + list(app_state.assistants.items())
+    )
+
+
 @ensure_app_state
 def main(app_state: AppState) -> None:
     """Main function to run the Streamlit app."""
     st.title("OpenAI Assistant Configuration")
+
+    if st.button("New Assistant"):
+        add_assistant(app_state)
+
     assistant_id, assistant_name = select_assistant(app_state.assistants)
     configuration = setup_configuration_widgets(app_state, assistant_id, assistant_name)
 
