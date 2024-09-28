@@ -216,6 +216,12 @@ def get_function(app_state: AppState, function_id: str, function_name: str) -> d
             item = None
         if item:
             app_state.current_function = load_from_json_schema(item.value.as_dict())
+
+            st.subheader("Used By:")
+            if item.used_by:
+                for asst in item.used_by:
+                    st.write(f"`{asst}`")
+
         else:
             app_state.current_function = new_function()
         app_state.current_function["id"] = function_id

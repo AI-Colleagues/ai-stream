@@ -62,11 +62,13 @@ def main(app_state: AppState) -> None:
         prompt_value = ""
         prompt_name = ""
         prompt_id = create_id()
+        used_by = []
         st.warning("No prompts yet.")
     else:
         prompt_name = prompt_id2name[prompt_id]
         prompt = PromptsTable.get(hash_key=prompt_id, range_key=prompt_name)
         prompt_value = prompt.value
+        used_by = prompt.used_by
 
         st.sidebar.caption(f"ID: {prompt_id}")
     edit_delete = st.checkbox("Edit/Delete")
@@ -74,6 +76,11 @@ def main(app_state: AppState) -> None:
         edit_prompt(prompt_value, prompt_name, prompt_id)
     else:
         review_prompt(prompt_value)
+
+    st.subheader("Used By:")
+    if used_by:
+        for asst in used_by:
+            st.write(f"`{asst}`")
 
 
 if not TESTING:
