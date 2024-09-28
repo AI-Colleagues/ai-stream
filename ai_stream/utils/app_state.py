@@ -1,6 +1,5 @@
 """Definitions of app specific states."""
 
-from collections import OrderedDict
 from collections.abc import Callable
 from functools import wraps
 from typing import Any
@@ -33,8 +32,10 @@ class AppState:
         """Assistant IDs and names, for displaying in the selector."""
         self.recent_tool_output: dict = {}
         """The latest tool output if any."""
-        self.function_tools: dict[str, dict] = OrderedDict()
-        """Cache for function_tools."""
+        self.current_function: dict = {}
+        """Current function being edited."""
+        # self.function_tools: dict[str, dict] = OrderedDict()
+        # """Cache for function_tools."""
 
 
 def ensure_app_state(func: Callable) -> Callable:
