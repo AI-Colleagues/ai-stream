@@ -72,7 +72,7 @@ def load_from_json_schema(schema: str | dict) -> dict:
 
 def new_function() -> dict:
     """Create and return a new function."""
-    return {"name": "New Function", "description": "", "parameters": {}}
+    return {"name": "NewFunction", "description": "", "parameters": {}}
 
 
 def add_function(app_state: AppState) -> None:
@@ -210,12 +210,15 @@ def select_function(functions: dict) -> tuple:
 def get_function(app_state: AppState, function_id: str, function_name: str) -> dict:
     """Get the function dict given its ID."""
     if app_state.current_function.get("id", "") != function_id:  # Needs reloading
-        item = FunctionsTable.get(function_id, function_name)
+        try:
+            item = FunctionsTable.get(function_id, function_name)
+        except DoesNotExist:
+            item = None
         if item:
             app_state.current_function = load_from_json_schema(item.value.as_dict())
-            app_state.current_function["id"] = function_id
         else:
             app_state.current_function = new_function()
+        app_state.current_function["id"] = function_id
 
     stored_function = app_state.current_function
     if st.checkbox("Expert Mode"):
