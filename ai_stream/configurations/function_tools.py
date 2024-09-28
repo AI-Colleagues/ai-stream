@@ -308,7 +308,7 @@ def main(app_state: AppState) -> None:
     st.code(json_schema, language="json")
 
     if st.button("Save Function"):
-        function_name = selected_function["name"]
+        function_name = new_name
         try:
             existing_function = FunctionsTable.get(function_id, function_name)
         except DoesNotExist:
@@ -328,6 +328,7 @@ def main(app_state: AppState) -> None:
                 f"Function has been saved with name {function_name} and "
                 f"ID {function_id}."
             )
+        app_state.functions[function_id] = function_name
 
     # Option to remove the function
     if st.button("Remove Function"):
