@@ -1,6 +1,9 @@
 """Configuration page for function tools."""
 
+import copy
 import json
+from dataclasses import dataclass
+from dataclasses import field
 import streamlit as st
 from ai_stream import TESTING
 from ai_stream.db.aws import FunctionsTable
@@ -12,6 +15,25 @@ from ai_stream.utils.app_state import ensure_app_state
 PARAM_TYPES = ["string", "number", "integer", "boolean", "array", "object"]
 
 
+@dataclass
+class FunctionParameter:
+    """Data class for a function parameter."""
+
+    name: str = ""
+    description: str = ""
+    type: str = "string"
+    required: bool = True
+    enum: list = field(default_factory=list)
+    items_type: str = "string"
+    type_index: int = 0
+    items_type_index: int = 0
+
+    def __post_init__(self) -> None:
+        """Initialise indexes of parameter type and item_type."""
+        self.type_index = PARAM_TYPES.index(self.type)
+        self.items_type_index = PARAM_TYPES.index(self.items_type)
+
+
 def convert_json_schema_to_function_dict(json_str: str) -> dict:
     """Converts a JSON Schema into an OpenAI function dictionary."""
     json_schema = json.loads(json_str)
@@ -20,10 +42,10 @@ def convert_json_schema_to_function_dict(json_str: str) -> dict:
     function_description = json_schema.get("description")
     parameters = json_schema.get("parameters")
     required = parameters["required"]
-    converted_params = {}
+    converted_params: dict[str, FunctionParameter] = {}
     for param_name, param in parameters["properties"].items():
         param_id = create_id()
-        converted_params[param_id] = {
+        fields = {
             "name": param_name,
             "description": param["description"],
             "type": param["type"],
@@ -31,6 +53,7 @@ def convert_json_schema_to_function_dict(json_str: str) -> dict:
             "enum": param.get("enum", []),  # For enum values
             "items_type": param.get("items", {}).get("type", "string"),
         }
+        converted_params[param_id] = FunctionParameter(**fields)
 
     # Construct the function dictionary
     function_dict = {
@@ -70,21 +93,19 @@ def build_json_schema(
 ) -> str:
     """Build json schema given the function parameters."""
     required_params = [
-        param["name"]
-        for param in parameters.values()
-        if param["required"] and param["name"]
+        param.name for param in parameters.values() if param.required and param.name
     ]
     properties = {}
     for param in parameters.values():
-        if not param["name"]:
+        if not param.name:
             continue  # Skip parameters without a name
-        prop = {"type": param["type"], "description": param["description"]}
-        if param["type"] in ["string", "number", "integer"]:
-            if param.get("enum"):
-                prop["enum"] = param["enum"]
-        if param["type"] == "array":
-            prop["items"] = {"type": param["items_type"]}
-        properties[param["name"]] = prop
+        prop = {"type": param.type, "description": param.description}
+        if param.type in ["string", "number", "integer"]:
+            if param.enum:
+                prop["enum"] = param.enum
+        if param.type == "array":
+            prop["items"] = {"type": param.items_type}
+        properties[param.name] = prop
 
     parameters = {"type": "object", "properties": properties}
     if required_params:
@@ -118,40 +139,40 @@ def remove_parameter(selected_function: dict, param_id: str) -> None:
     del selected_function["parameters"][param_id]
 
 
-def parameter_input(selected_function: dict, param: dict, param_id: str) -> None:
+def parameter_input(
+    selected_function: dict, param: FunctionParameter, param_id: str
+) -> None:
     """Display the input widgets for the given parameter."""
-    param["name"] = st.text_input(
-        "Name", value=param.get("name", ""), key=f"name_{param_id}"
-    )
-    param["description"] = st.text_input(
+    param.name = st.text_input("Name", value=param.name, key=f"name_{param_id}")
+    param.description = st.text_input(
         "Description",
-        value=param.get("description", ""),
+        value=param.description,
         key=f"description_{param_id}",
     )
-    param["type"] = st.selectbox(
+    param.type = st.selectbox(
         "Type",
         options=PARAM_TYPES,
-        # index=PARAM_TYPES.index(param.get("type", "string")),
+        index=param.type_index,
         key=f"type_{param_id}",
     )
-    param["required"] = st.checkbox(
-        "Required", value=param.get("required", True), key=f"required_{param_id}"
+    param.required = st.checkbox(
+        "Required", value=param.required, key=f"required_{param_id}"
     )
     # For enum
-    if param["type"] in ["string", "number", "integer"]:
+    if param.type in ["string", "number", "integer"]:
         enum_input = st.text_input(
             "Enum values (comma-separated)",
-            value=", ".join(param.get("enum", [])),
+            value=", ".join(param.enum),
             key=f"enum_{param_id}",
         )
         # Convert the comma-separated string to a list
-        param["enum"] = [e.strip() for e in enum_input.split(",")] if enum_input else []
+        param.enum = [e.strip() for e in enum_input.split(",")] if enum_input else []
     # For array item type
-    if param["type"] == "array":
-        param["items_type"] = st.selectbox(
+    if param.type == "array":
+        param.items_type = st.selectbox(
             "Item Type",
             options=PARAM_TYPES,
-            # index=PARAM_TYPES.index(param.get("items_type", "string")),
+            index=param.items_type_index,
             key=f"items_type_{param_id}",
         )
     # Remove button for the parameter
@@ -210,14 +231,15 @@ def main(app_state: AppState) -> None:
 
     # Display each parameter
     for param_id, param in selected_function["parameters"].items():
-        with st.expander(f"Parameter: {param['name'] or 'Unnamed'}", expanded=True):
+        with st.expander(f"Parameter: {param.name or 'Unnamed'}", expanded=True):
             parameter_input(selected_function, param, param_id)
 
+    function = copy.deepcopy(selected_function)
     # Build the JSON schema using the function
     json_schema = build_json_schema(
-        selected_function["name"],
-        selected_function["description"],
-        selected_function["parameters"],
+        function["name"],
+        function["description"],
+        function["parameters"],
     )
 
     st.header("Generated JSON Schema")
