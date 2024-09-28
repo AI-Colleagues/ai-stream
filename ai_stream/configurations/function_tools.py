@@ -82,9 +82,11 @@ def add_function(app_state: AppState) -> None:
     app_state.function_tools[new_id] = new_function
 
 
-def remove_function(app_state: AppState, function_id: str) -> None:
+def remove_function(app_state: AppState, function_id: str, function_name: str) -> None:
     """Remove the given function."""
     del app_state.function_tools[function_id]
+    item = FunctionsTable.get(function_id, function_name)
+    item.delete()
 
 
 def build_json_schema(
@@ -266,7 +268,7 @@ def main(app_state: AppState) -> None:
 
     # Option to remove the function
     if st.button("Remove Function"):
-        remove_function(app_state, function_id)
+        remove_function(app_state, function_id, selected_function["name"])
         st.rerun()
 
 
