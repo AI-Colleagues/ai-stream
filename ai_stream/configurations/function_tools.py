@@ -253,8 +253,6 @@ def display_function(selected_function: dict, function_id: str) -> tuple:
     if st.button("Add Parameter"):
         add_parameter(selected_function)
 
-    # pprint(selected_function)
-
     # Display each parameter
     updated_parameters = {}
     for param_id, param in selected_function["parameters"].items():
