@@ -1,0 +1,13 @@
+dynamodb:
+  prompts_table: prompts
+  functions_table: functions
+  assistants_table: assistants
+  billing_mode: PAY_PER_REQUEST
+
+models:
+  - gpt-4o-mini
+  - gpt-4o
+  - gpt-4-turbo
+
+moto_url: http://127.0.0.1:5000
+data_dump_file_name: db_data.json

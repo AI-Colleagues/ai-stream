@@ -14,14 +14,16 @@ classifiers = [
   "Programming Language :: Python :: 3.12"
 ]
 dependencies = [
-  "streamlit==1.37.0",
+  "streamlit==1.38.0",
+  "streamlit_code_editor==0.1.21",
   "langchain==0.2.3",
   "langchain-core==0.2.5",
-  "langchain-community==0.2.4",
-  "langchain-openai==0.1.8",
-  "langchain-text-splitters==0.2.1",
-  "openai==1.43.0",
+  "openai==1.50.2",
   "python-dotenv==1.0.1",
+  "pynamodb==6.0.1",
+  "hydra-core==1.3.2",
+  "moto==5.0.15",
+  "moto[server]",
   "watchdog"
 ]
 description = "An LLM-powered AI agent with context-aware UI. All you need to do is to give your instructions and follow the instructions."
