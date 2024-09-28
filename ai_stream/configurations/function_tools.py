@@ -188,15 +188,8 @@ def parameter_input(param: FunctionParameter, param_id: str) -> FunctionParamete
     )
 
 
-@ensure_app_state
-def main(app_state: AppState) -> None:
-    """Main layout."""
-    st.title("OpenAI Function Schema Builder")
-
-    # Button to add a new function
-    if st.button("New Function"):
-        add_function(app_state)
-
+def select_function(app_state: AppState) -> str:
+    """Select a function to edit and return its id."""
     load_functions(app_state)
 
     if not app_state.function_tools:
@@ -213,9 +206,13 @@ def main(app_state: AppState) -> None:
         format_func=lambda x: function_id2name[x],
         key="function_selectbox",
     )
+    st.sidebar.caption(f"ID: {function_id}")
 
-    # Now get the selected function
-    assert function_id
+    return function_id
+
+
+def get_function(app_state: AppState, function_id: str) -> dict:
+    """Get the function dict given its ID."""
     stored_function = app_state.function_tools[function_id]
     if st.checkbox("Expert Mode"):
         current_schema = build_json_schema(
@@ -229,11 +226,13 @@ def main(app_state: AppState) -> None:
                 "to load the changes."
             )
             code = code_editor(current_schema, lang="json", height=200)
-            selected_function = load_from_json_schema(code["text"] or current_schema)
+            return load_from_json_schema(code["text"] or current_schema)
     else:
-        selected_function = stored_function
+        return stored_function
 
-    # Function Name and Description
+
+def display_function(selected_function: dict, function_id: str) -> tuple:
+    """Display the selected function."""
     new_name = st.text_input(
         "Function Name",
         value=selected_function.get("name", ""),
@@ -261,6 +260,29 @@ def main(app_state: AppState) -> None:
             if st.button("Remove Parameter", key=f"remove_{param_id}"):
                 remove_parameter(selected_function, param_id)
                 st.rerun()  # Rerun the app to reflect changes
+
+    return new_name, new_description, updated_parameters
+
+
+@ensure_app_state
+def main(app_state: AppState) -> None:
+    """Main layout."""
+    st.title("OpenAI Function Schema Builder")
+
+    # Button to add a new function
+    if st.button("New Function"):
+        add_function(app_state)
+
+    function_id = select_function(app_state)
+
+    # Now get the selected function
+    selected_function = get_function(app_state, function_id)
+
+    # Display function
+
+    new_name, new_description, updated_parameters = display_function(
+        selected_function, function_id
+    )
 
     # Build the JSON schema using the function
     json_schema = build_json_schema(
