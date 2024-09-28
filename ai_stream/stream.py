@@ -4,7 +4,6 @@ import json
 import logging
 import streamlit as st
 from openai import AssistantEventHandler
-from openai import OpenAI
 from openai.types.beta import AssistantStreamEvent
 from openai.types.beta.threads import Run
 from openai.types.beta.threads import Text
@@ -35,7 +34,6 @@ PROCESSING_REFRESH = "`Processing...`"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-client = OpenAI()
 
 
 class UIAssistantEventHandler(AssistantEventHandler):
@@ -50,6 +48,7 @@ class UIAssistantEventHandler(AssistantEventHandler):
     ):
         """Initialise."""
         self.app_state = app_state
+        self.client = app_state.openai_client
         self.st_placeholder = st_placeholder
         self.running_response = ""
         with self.st_placeholder:
@@ -119,7 +118,7 @@ class UIAssistantEventHandler(AssistantEventHandler):
     def submit_tool_outputs(self, tool_outputs: list, run_id: str) -> str:
         """Use the submit_tool_outputs_stream helper."""
         assert self.current_run
-        with client.beta.threads.runs.submit_tool_outputs_stream(
+        with self.client.beta.threads.runs.submit_tool_outputs_stream(
             thread_id=self.current_run.thread_id,
             run_id=self.current_run.id,
             tool_outputs=tool_outputs,
@@ -147,11 +146,13 @@ def get_response(
 
         # Upload files to OpenAI
         for file in app_state.recent_tool_output["files"]:
-            uploaded = client.files.create(file=file.getvalue(), purpose="assistants")
+            uploaded = app_state.openai_client.files.create(
+                file=file.getvalue(), purpose="assistants"
+            )
             file_ids.append(uploaded.id)
 
         # Create an assistant using the file ID
-        assistant = client.beta.assistants.create(
+        assistant = app_state.openai_client.beta.assistants.create(
             instructions=SYSTEM_PROMPT,
             model=MODEL_NAME,
             tools=[{"type": "code_interpreter"}],
@@ -160,13 +161,13 @@ def get_response(
     else:
         tools = tools_to_openai_functions()
         # Create an assistant using the file ID
-        assistant = client.beta.assistants.create(
+        assistant = app_state.openai_client.beta.assistants.create(
             instructions=SYSTEM_PROMPT,
             model=model_name,
             tools=tools,  # type: ignore[arg-type]
         )
 
-    with client.beta.threads.runs.stream(
+    with app_state.openai_client.beta.threads.runs.stream(
         thread_id=app_state.openai_thread_id,
         assistant_id=assistant.id,
         event_handler=UIAssistantEventHandler(
@@ -202,7 +203,7 @@ def main(app_state: AppState) -> None:
     """Main layout."""
     st.title(TITLE)
     if not app_state.openai_thread_id:
-        thread = client.beta.threads.create()
+        thread = app_state.openai_client.beta.threads.create()
         app_state.openai_thread_id = thread.id
     display_history(app_state)
 
@@ -210,7 +211,7 @@ def main(app_state: AppState) -> None:
     if user_input:
         app_state.chat_history.append((USER_LABEL, user_input))
         st.chat_message(USER_LABEL).write(user_input)
-        client.beta.threads.messages.create(
+        app_state.openai_client.beta.threads.messages.create(
             app_state.openai_thread_id,
             role="user",
             content=user_input,
