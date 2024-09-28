@@ -31,7 +31,7 @@ classifiers = [
 ]
 description = "An LLM-powered AI agent with context-aware UI. All you need to do is to give your instructions and follow the instructions."
 documentation = ""
-homepage = ""
+homepage = "https://github.com/AI-Colleagues/ai-stream"
 keywords = ["AI", "AI Agent"]
 license = ""  # Specify your license here
 name = "ai-stream"
