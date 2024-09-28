@@ -2,6 +2,7 @@
 
 import json
 import os
+from pynamodb.attributes import MapAttribute
 from pynamodb.attributes import UnicodeAttribute
 from pynamodb.models import Model
 from ai_stream import LOCAL_AWS
@@ -51,7 +52,7 @@ class FunctionsTable(Model):
 
     id = UnicodeAttribute(hash_key=True)
     name = UnicodeAttribute(range_key=True)
-    value = UnicodeAttribute()
+    value = MapAttribute()
 
 
 def _prepare_dev_env() -> None:

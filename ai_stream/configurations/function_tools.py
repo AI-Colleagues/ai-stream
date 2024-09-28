@@ -34,14 +34,17 @@ class FunctionParameter:
         self.items_type_index = PARAM_TYPES.index(self.items_type)
 
 
-def load_from_json_schema(json_str: str) -> dict:
+def load_from_json_schema(schema: str | dict) -> dict:
     """Converts a JSON Schema into an OpenAI function dictionary."""
-    json_schema = json.loads(json_str)
+    if isinstance(schema, str):
+        schema_dict = json.loads(schema)
+    else:
+        schema_dict = schema
     # Extract the necessary fields
-    function_name = json_schema.get("name")
-    function_description = json_schema.get("description")
-    parameters = json_schema.get("parameters")
-    required = parameters["required"]
+    function_name = schema_dict.get("name")
+    function_description = schema_dict.get("description")
+    parameters = schema_dict.get("parameters")
+    required = parameters.get("required", [])
     converted_params: dict[str, FunctionParameter] = {}
     for param_name, param in parameters["properties"].items():
         param_id = create_id()
@@ -70,7 +73,7 @@ def load_functions(app_state: AppState) -> None:
     if app_state.function_tools:  # Already loaded
         return
     items = FunctionsTable.scan()
-    functions = {item.id: load_from_json_schema(item.value) for item in items}
+    functions = {item.id: load_from_json_schema(item.value.as_dict()) for item in items}
     app_state.function_tools.update(functions)
 
 
@@ -90,7 +93,7 @@ def remove_function(app_state: AppState, function_id: str, function_name: str) -
 
 def build_json_schema(
     function_name: str, function_description: str, parameters: dict
-) -> str:
+) -> tuple:
     """Build json schema given the function parameters."""
     required_params = [
         param.name for param in parameters.values() if param.required and param.name
@@ -111,13 +114,13 @@ def build_json_schema(
     if required_params:
         parameters["required"] = required_params
 
-    json_schema = {
+    schema = {
         "name": function_name,
         "description": function_description,
         "parameters": parameters,
     }
 
-    return json.dumps(json_schema, indent=2)
+    return schema, json.dumps(schema, indent=2)
 
 
 def add_parameter(selected_function: dict) -> None:
@@ -215,7 +218,7 @@ def get_function(app_state: AppState, function_id: str) -> dict:
     """Get the function dict given its ID."""
     stored_function = app_state.function_tools[function_id]
     if st.checkbox("Expert Mode"):
-        current_schema = build_json_schema(
+        _, current_schema = build_json_schema(
             stored_function["name"],
             stored_function["description"],
             stored_function["parameters"],
@@ -285,7 +288,7 @@ def main(app_state: AppState) -> None:
     )
 
     # Build the JSON schema using the function
-    json_schema = build_json_schema(
+    schema, json_schema = build_json_schema(
         new_name,
         new_description,
         updated_parameters,
@@ -297,7 +300,7 @@ def main(app_state: AppState) -> None:
 
     if st.button("Save Function"):
         item = FunctionsTable(
-            id=function_id, name=selected_function["name"], value=json_schema
+            id=function_id, name=selected_function["name"], value=schema
         )
         item.save()
         st.success("Saved to DB.")
