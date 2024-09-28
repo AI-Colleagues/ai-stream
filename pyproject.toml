@@ -15,6 +15,7 @@ classifiers = [
 ]
 dependencies = [
   "streamlit==1.38.0",
+  "streamlit_code_editor==0.1.21",
   "langchain==0.2.3",
   "langchain-core==0.2.5",
   "openai==1.50.2",

@@ -4,6 +4,7 @@ import json
 from dataclasses import dataclass
 from dataclasses import field
 import streamlit as st
+from code_editor import code_editor
 from ai_stream import TESTING
 from ai_stream.db.aws import FunctionsTable
 from ai_stream.utils import create_id
@@ -223,8 +224,12 @@ def main(app_state: AppState) -> None:
             stored_function["parameters"],
         )
         with st.expander("Load from JSON Schema", expanded=True):
-            new_schema = st.text_area("JSON Schema", value=current_schema, height=200)
-            selected_function = load_from_json_schema(new_schema)
+            st.write(
+                "Press `Control + Enter` (Windows) or `Command + Enter` (Mac) "
+                "to load the changes."
+            )
+            code = code_editor(current_schema, lang="json", height=200)
+            selected_function = load_from_json_schema(code["text"] or current_schema)
     else:
         selected_function = stored_function
 
