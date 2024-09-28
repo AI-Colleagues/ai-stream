@@ -17,8 +17,6 @@ To set up, add `OPENAI_API_KEY` to your `.env` file.
 
 ## Run
 
-Start moto server first (for local DynamoDB): `moto_server`.
-
 Then type to start the app: `streamlit run ai_stream/app.py`
 
 
