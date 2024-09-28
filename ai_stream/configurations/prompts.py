@@ -30,7 +30,7 @@ def review_prompt(prompt: str) -> None:
 def main() -> None:
     """Main layout."""
     # Get all prompt names and ids from DB
-    items = PromptsTable.scan()
+    items = PromptsTable.scan(attributes_to_get=["id", "name"])
     prompt_id2name = {prompt.id: prompt.name for prompt in items}
     prompt_id = st.sidebar.selectbox(
         "Prompts", prompt_id2name, format_func=lambda x: prompt_id2name[x]

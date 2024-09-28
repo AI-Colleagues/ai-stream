@@ -2,6 +2,8 @@
 
 import json
 import os
+from typing import Any
+from pynamodb.attributes import MapAttribute
 from pynamodb.attributes import UnicodeAttribute
 from pynamodb.models import Model
 from ai_stream import LOCAL_AWS
@@ -38,6 +40,20 @@ class PromptsTable(Model):
     id = UnicodeAttribute(hash_key=True)
     name = UnicodeAttribute(range_key=True)
     value = UnicodeAttribute()
+
+
+@register_pynamodb_table
+class FunctionsTable(Model):
+    """Table for storing prompts."""
+
+    class Meta(DefaultTableMeta):
+        """Table meta."""
+
+        table_name = config.dynamodb.functions_table
+
+    id = UnicodeAttribute(hash_key=True)
+    name = UnicodeAttribute(range_key=True)
+    value: MapAttribute[str, Any] = MapAttribute()
 
 
 def _prepare_dev_env() -> None:
