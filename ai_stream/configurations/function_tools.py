@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from dataclasses import field
 import streamlit as st
 from code_editor import code_editor
+from pynamodb.exceptions import DoesNotExist
 from ai_stream import TESTING
 from ai_stream.db.aws import FunctionsTable
 from ai_stream.utils import create_id
@@ -298,11 +299,26 @@ def main(app_state: AppState) -> None:
     st.code(json_schema, language="json")
 
     if st.button("Save Function"):
-        item = FunctionsTable(
-            id=function_id, name=selected_function["name"], value=schema
-        )
-        item.save()
-        st.success("Saved to DB.")
+        function_name = selected_function["name"]
+        try:
+            existing_function = FunctionsTable.get(function_id, function_name)
+        except DoesNotExist:
+            existing_function = None
+        if existing_function:
+            existing_function.update(actions=[FunctionsTable.value.set(schema)])
+            st.success(
+                f"Function has been saved with name {function_name} and "
+                f"ID {function_id}."
+            )
+        else:
+            item = FunctionsTable(
+                id=function_id, name=function_name, used_by=[], value=schema
+            )
+            item.save()
+            st.success(
+                f"Function has been saved with name {function_name} and "
+                f"ID {function_id}."
+            )
 
     # Option to remove the function
     if st.button("Remove Function"):

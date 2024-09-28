@@ -3,6 +3,7 @@
 import json
 import os
 from typing import Any
+from pynamodb.attributes import ListAttribute
 from pynamodb.attributes import MapAttribute
 from pynamodb.attributes import UnicodeAttribute
 from pynamodb.models import Model
@@ -16,6 +17,7 @@ class AIStreamTable(Model):
 
     id = UnicodeAttribute(hash_key=True)
     name = UnicodeAttribute(range_key=True)
+    used_by = ListAttribute(of=UnicodeAttribute)
 
 
 PYNAMODB_TABLES: dict[str, type[AIStreamTable]] = {}

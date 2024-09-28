@@ -236,6 +236,22 @@ def main(app_state: AppState) -> None:
             )
         else:
             assistant = app_state.openai_client.beta.assistants.create(**configuration)
+        # Update used prompt and functions
+        metadata = configuration["metadata"]
+        prompt_id = metadata["prompt_id"]
+        prompt_name = app_state.prompts[prompt_id]
+        item = PromptsTable.get(prompt_id, prompt_name)
+        if assistant.id not in item.used_by:
+            item.update(actions=[PromptsTable.used_by.append(assistant.id)])
+
+        for key, val in metadata.items():
+            if not key.startswith("function_"):
+                continue
+            function_name = app_state.functions[val]
+            item = FunctionsTable.get(val, function_name)
+            if assistant.id not in item.used_by:
+                item.update(actions=[FunctionsTable.used_by.append(assistant.id)])
+
         # Save to app_state.assistants
         app_state.assistants[assistant.id] = configuration["name"]
         st.success(f"Assistant {assistant.id} saved!")

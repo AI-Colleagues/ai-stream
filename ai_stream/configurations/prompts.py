@@ -1,6 +1,7 @@
 """Configuration page for prompts."""
 
 import streamlit as st
+from pynamodb.exceptions import DoesNotExist
 from ai_stream import TESTING
 from ai_stream.db.aws import PromptsTable
 from ai_stream.utils import create_id
@@ -19,9 +20,27 @@ def edit_prompt(prompt: str, prompt_name: str, prompt_id: str) -> None:
         prompt_name = st.text_input("Prompt Name", prompt_name)
     if st.button("Save", disabled=not (prompt_value and prompt_name)):
         # Save to DB
-        item = PromptsTable(id=prompt_id, name=prompt_name, value=prompt_value)
-        item.save()
-        st.success(f"Prompt has been saved with name {prompt_name} and ID {prompt_id}.")
+        try:
+            existing_prompt = PromptsTable.get(
+                hash_key=prompt_id, range_key=prompt_name
+            )
+        except DoesNotExist:
+            existing_prompt = None
+        if existing_prompt:
+            # Update existing prompt
+            existing_prompt.update(actions=[PromptsTable.value.set(prompt_value)])
+            st.success(
+                f"Prompt has been updated with name {prompt_name} and ID {prompt_id}."
+            )
+        else:
+            # Save new prompt to DB
+            item = PromptsTable(
+                id=prompt_id, name=prompt_name, used_by=[], value=prompt_value
+            )
+            item.save()
+            st.success(
+                f"Prompt has been saved with name {prompt_name} and ID {prompt_id}."
+            )
 
 
 def review_prompt(prompt: str) -> None:
