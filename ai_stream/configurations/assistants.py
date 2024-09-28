@@ -8,6 +8,8 @@ from pynamodb.exceptions import DoesNotExist
 from ai_stream import TESTING
 from ai_stream.config import load_config
 from ai_stream.db.aws import AssistantsTable
+from ai_stream.db.aws import FunctionsTable
+from ai_stream.db.aws import PromptsTable
 from ai_stream.utils import create_id
 from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
@@ -52,9 +54,11 @@ def setup_configuration_widgets(
     )
 
     # System instructions
-    system_instructions: str = st.sidebar.text_area(
-        "System Instructions", value=selected_assistant["system_instructions"]
+    prompts = app_state.prompts
+    prompt_id: str = st.sidebar.selectbox(
+        "Select Prompt", options=prompts, format_func=lambda x: prompts[x]
     )
+    system_instructions = PromptsTable.get(prompt_id, prompts[prompt_id]).value
 
     # Model selection
     models = list(config.models)
@@ -92,15 +96,13 @@ def setup_configuration_widgets(
 
     function_schema: dict[str, Any] | None = None
     if custom_function_enabled:
-        function_schema_str: str = st.sidebar.text_area(
-            "Function Schema (JSON format)", value=""
+        functions = app_state.functions
+        function_id = st.sidebar.selectbox(
+            "Select Function", options=functions, format_func=lambda x: functions[x]
         )
-        # Parse the function schema
-        try:
-            function_schema = json.loads(function_schema_str)
-        except json.JSONDecodeError:
-            st.sidebar.error("Invalid JSON in Function Schema")
-            function_schema = None
+        function_schema = FunctionsTable.get(
+            function_id, functions[function_id]
+        ).value.as_dict()
 
     # Add options for response format
     st.sidebar.subheader("Response Format")
@@ -173,7 +175,19 @@ def main(app_state: AppState) -> None:
 
     # Display the current configuration for demonstration purposes
     st.subheader("Current Configuration")
-    st.json(configuration)
+    st.code(json.dumps(configuration, indent=4), language="json")
+
+    if st.button("Save Assistant"):
+        # Save to OpenAI
+        # Save to app_state.assistants
+        # Save to AssistantsTable
+        pass
+
+    if st.button("Delete Assistant"):
+        # Delete from OpenAI
+        # Delete from app_state.assistants
+        # Delete from AssistantsTable
+        pass
 
 
 if not TESTING:
