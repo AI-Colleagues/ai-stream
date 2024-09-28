@@ -189,6 +189,7 @@ def main(app_state: AppState) -> None:
     if st.button("Save Assistant"):
         # Save to OpenAI
         if assistant_id.startswith("asst_"):  # Update
+            # TODO
             pass
         else:
             assistant = app_state.openai_client.beta.assistants.create(**configuration)
@@ -201,6 +202,7 @@ def main(app_state: AppState) -> None:
         # Delete from OpenAI
         # Delete from app_state.assistants
         # Delete from AssistantsTable
+        # TODO
         pass
 
 
