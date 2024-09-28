@@ -36,7 +36,7 @@ keywords = ["AI", "AI Agent"]
 license = ""  # Specify your license here
 name = "ai-stream"
 readme = "README.md"
-repository = ""
+repository = "https://github.com/AI-Colleagues/ai-stream"
 version = "0.1.0"
 
 [tool.poetry.dependencies]
