@@ -146,13 +146,14 @@ def select_assistant(assistants: dict) -> tuple:
     assistant_id = st.sidebar.selectbox(
         "Select Assistant", options=assistants, format_func=lambda x: assistants[x]
     )
+    st.sidebar.caption(f"ID: {assistant_id}")
 
     return assistant_id, assistants[assistant_id]
 
 
 def add_assistant(app_state: AppState) -> None:
     """Add a new assistant."""
-    new_id = create_id()
+    new_id = "tmp_" + create_id()
     app_state.assistants = OrderedDict(
         [(new_id, new_assistant()["assistant_name"])]
         + list(app_state.assistants.items())
