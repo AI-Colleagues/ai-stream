@@ -6,7 +6,6 @@ from functools import wraps
 from typing import Any
 from openai import OpenAI
 from streamlit import session_state
-from ai_stream.db.aws import PYNAMODB_TABLES
 
 
 class AppState:
@@ -49,20 +48,12 @@ def ensure_app_state(func: Callable) -> Callable:
     def wrapper(*args: list, **kwargs: dict) -> Any:
         if "app_state" not in session_state:
             app_state = AppState()
+            api_key = os.environ.get("OPENAI_API_KEY", None)
             project_id = os.environ.get("PROJECT_ID", None)
-            client = OpenAI(project=project_id)
-            app_state.openai_client = client
-            # Load IDs and names from DB
-            for table_cls in PYNAMODB_TABLES.values():
-                items = table_cls.scan(attributes_to_get=["id", "name"])
-                items_dict = {item.id: item.name for item in items}
-                table_name = table_cls.Meta.table_name
-                setattr(app_state, table_name, items_dict)
-
-            # Load assistants
-            # TODO: Add pagination in case number of assistants > 100
-            for asst in client.beta.assistants.list(limit=100):
-                app_state.assistants[asst.id] = asst.name
+            extra_kwargs = {"project": project_id} if project_id else {}
+            if api_key:
+                client = OpenAI(api_key=api_key, **extra_kwargs)
+                app_state.openai_client = client
 
             session_state.app_state = app_state
 
