@@ -1,39 +1,13 @@
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = ["poetry-core>=1.5.0"]
-
-[tool.coverage.report]
-exclude_lines = [
-  "pragma: no cover",
-  "@overload",
-  "if TYPE_CHECKING:",
-  "if typing.TYPE_CHECKING:"
-]
-
-[tool.coverage.run]
-branch = true
-command_line = "-m pytest"
-source = ["ai_stream"]
-
-[tool.mypy]
-disallow_untyped_defs = true
-ignore_missing_imports = true
-python_version = "3.12"
+requires = ["poetry-core"]
 
 [tool.poetry]
-authors = ["AI Colleagues <info@ai-colleagues.com>"]
-classifiers = [
-  "Natural Language :: English",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.12"
-]
-description = "An LLM-powered AI agent with context-aware UI. All you need to do is to give your instructions and follow the instructions."
+authors = ["AI Colleagues"]
+description = "OpenAI Assistants API made simple. Assemble your assistant through prompts, functions, and assistants configurations, then test it in AI Stream. Updating prompts and functions will automatically update the assistants using them."
 documentation = "https://github.com/AI-Colleagues/ai-stream"
 homepage = "https://github.com/AI-Colleagues/ai-stream"
-keywords = ["AI", "AI Agent"]
-license = "MIT"  # Specify your license here
+license = "MIT"
 name = "ai-stream"
 readme = "README.md"
 repository = "https://github.com/AI-Colleagues/ai-stream"
@@ -46,58 +20,8 @@ langchain-core = "0.2.5"
 moto = {version = "5.0.15", extras = ["server"]}
 openai = "1.50.2"
 pynamodb = "6.0.1"
-python = ">=3.12,<4.0"
+python = "^3.12"
 python-dotenv = "1.0.1"
 streamlit = "1.38.0"
 streamlit_code_editor = "0.1.21"
 watchdog = "*"
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-
-[tool.ruff]
-exclude = ["docs", "build"]
-line-length = 88
-target-version = "py310"
-
-[tool.ruff.lint]
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-extend-select = [
-  "D401",
-  "D400",
-  "D404",
-  "TID252"
-]
-ignore = [
-  "PLR2004",
-  "PLR0913",
-  "D401"
-]
-select = [
-  "E",
-  "F",
-  "B",
-  "D",
-  "C90",
-  "I",
-  "N",
-  "UP",
-  "PLE",
-  "PLR",
-  "PLW"
-]
-
-[tool.ruff.lint.isort]
-force-single-line = true
-known-first-party = ["ai_stream"]
-lines-after-imports = 2
-no-lines-before = ["future", "standard-library", "third-party", "first-party", "local-folder"]
-
-[tool.ruff.lint.mccabe]
-max-complexity = 10
-
-[tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D"]
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
