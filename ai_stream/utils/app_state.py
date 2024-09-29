@@ -1,6 +1,5 @@
 """Definitions of app specific states."""
 
-import os
 from collections.abc import Callable
 from functools import wraps
 from typing import Any
@@ -48,13 +47,6 @@ def ensure_app_state(func: Callable) -> Callable:
     def wrapper(*args: list, **kwargs: dict) -> Any:
         if "app_state" not in session_state:
             app_state = AppState()
-            api_key = os.environ.get("OPENAI_API_KEY", None)
-            project_id = os.environ.get("PROJECT_ID", None)
-            extra_kwargs = {"project": project_id} if project_id else {}
-            if api_key:
-                client = OpenAI(api_key=api_key, **extra_kwargs)
-                app_state.openai_client = client
-
             session_state.app_state = app_state
 
         return func(session_state.app_state, *args, **kwargs)
