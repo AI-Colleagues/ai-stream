@@ -10,14 +10,14 @@ https://github.com/user-attachments/assets/96db4e0d-2792-4ca1-8065-ab8c80730d18
 
 Install:
 ```
-pip install -e .
+poetry install
 ```
 
 To set up, add `OPENAI_API_KEY` to your `.env` file.
 
 ## Run
 
-Then type to start the app: `streamlit run ai_stream/app.py`
+Then type to start the app: `poetry run streamlit run ai_stream/app.py`
 
 
 ## TODO
