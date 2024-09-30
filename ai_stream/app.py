@@ -1,6 +1,7 @@
 """Entry script."""
 
 import atexit
+import os
 import streamlit as st
 from moto.server import ThreadedMotoServer
 from openai import OpenAI
@@ -54,9 +55,13 @@ def main(app_state: AppState) -> None:
     from ai_stream.utils.registries import page_registry
 
     # Define page and navigation
-    project_id = st.sidebar.text_input("OpenAI Project ID", type="password")
+    project_id = st.sidebar.text_input(
+        "OpenAI Project ID", type="password", value=os.environ.get("PROJECT_ID", "")
+    )
     kwargs = {"project": project_id} if project_id else {}
-    api_key = st.sidebar.text_input("OpenAI Key", type="password")
+    api_key = st.sidebar.text_input(
+        "OpenAI Key", type="password", value=os.environ.get("OPENAI_API_KEY", "")
+    )
     if api_key:
         client = OpenAI(api_key=api_key, **kwargs)
         app_state.openai_client = client
