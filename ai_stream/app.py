@@ -13,6 +13,7 @@ from ai_stream.db.aws import dump_data_to_disk
 from ai_stream.db.aws import load_data_from_disk
 from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
+from ai_stream.utils.registries import page_defaults_registry
 
 
 logger = get_logger(__name__)
@@ -67,7 +68,7 @@ def main(app_state: AppState) -> None:
         client = OpenAI(api_key=api_key, **kwargs)
         app_state.openai_client = client
     # Skip the api_key checking for random_stream
-    elif pg._url_path != "random_stream":
+    elif page_defaults_registry[pg._page].skip_api_key:
         pass
     else:
         st.warning("Your OpenAI API key is needed for using this page.")
