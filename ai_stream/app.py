@@ -44,6 +44,9 @@ def load_tables():
         table_name = table_cls.Meta.table_name
         setattr(app_state, table_name, items_dict)
 
+    if not app_state.openai_client:
+        return
+
     # Load assistants
     # TODO: Add pagination in case number of assistants > 100
     for asst in app_state.openai_client.beta.assistants.list(limit=100):
@@ -57,13 +60,14 @@ def main(app_state: AppState) -> None:
 
     # Define page and navigation
     project_id = st.sidebar.text_input(
-        "OpenAI Project ID", type="password", value=os.environ.get("PROJECT_ID", "")
+        "OpenAI Project ID", type="password", value=os.environ.get("PROJECT_ID1", "")
     )
     kwargs = {"project": project_id} if project_id else {}
     api_key = st.sidebar.text_input(
-        "OpenAI Key", type="password", value=os.environ.get("OPENAI_API_KEY", "")
+        "OpenAI Key", type="password", value=os.environ.get("OPENAI_API_KEY1", "")
     )
     pg = st.navigation(page_registry)
+
     if api_key:
         client = OpenAI(api_key=api_key, **kwargs)
         app_state.openai_client = client
