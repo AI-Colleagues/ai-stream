@@ -27,12 +27,21 @@ def register_page(cls: type[AppPage]) -> None:
 
 
 @register_page
+class WelcomePage(AppPage):
+    """Welcome page."""
+
+    group: str = ""
+    page: StreamlitPage = st.Page("welcome.py", title="AI Stream", icon="👋")
+    weight: float = 0
+
+
+@register_page
 class RandomStreamPage(AppPage):
     """Random Stream page."""
 
     group: str = ""
     page: StreamlitPage = st.Page("random_stream.py", title="Random Stream", icon="🎰")
-    weight: float = 0
+    weight: float = 1
 
 
 @register_page
@@ -41,7 +50,7 @@ class AIStreamPage(AppPage):
 
     group: str = ""
     page: StreamlitPage = st.Page("stream.py", title="AI Stream", icon="📱")
-    weight: float = 1
+    weight: float = 2
 
 
 # Configurations

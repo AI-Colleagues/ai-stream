@@ -70,6 +70,7 @@ def main(app_state: AppState) -> None:
     elif pg._url_path != "random_stream":
         pass
     else:
+        st.warning("Your OpenAI API key is needed for using this page.")
         st.stop()
     load_tables()
     pg.run()
