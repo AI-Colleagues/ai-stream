@@ -2,6 +2,7 @@
 
 import json
 import logging
+from typing import override
 import streamlit as st
 from openai import AssistantEventHandler
 from openai.types.beta import AssistantStreamEvent
@@ -11,16 +12,15 @@ from openai.types.beta.threads import TextDelta
 from openai.types.beta.threads.runs import ToolCall
 from openai.types.beta.threads.runs import ToolCallDelta
 from streamlit.delta_generator import DeltaGenerator
-from typing_extensions import override
+from ai_stream import ASSISTANT_LABEL
 from ai_stream import TESTING
+from ai_stream import USER_LABEL
 from ai_stream.ui_as_tools import UI_TOOLS
 from ai_stream.ui_as_tools import tools_to_openai_functions
 from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
 
 
-ASSISTANT_LABEL = "assistant"
-USER_LABEL = "user"
 TITLE = "AI Stream"
 MODEL_NAME = "gpt-4o"
 SYSTEM_PROMPT = (
@@ -50,7 +50,6 @@ class UIAssistantEventHandler(AssistantEventHandler):
         self.app_state = app_state
         self.client = app_state.openai_client
         self.st_placeholder = st_placeholder
-        self.running_response = ""
         with self.st_placeholder:
             st.write(PROCESSING_REFRESH)
         super().__init__(*args, **kwargs)
@@ -58,25 +57,22 @@ class UIAssistantEventHandler(AssistantEventHandler):
     @override
     def on_text_created(self, text: Text) -> None:
         self.st_placeholder = st.empty()
-        self.running_response = ""
 
     @override
     def on_text_delta(self, delta: TextDelta, snapshot: Text) -> None:
-        assert delta.value
-        self.running_response += delta.value
         with self.st_placeholder:
-            st.write(self.running_response)
+            st.write(snapshot.value)
 
+    @override
     def on_text_done(self, text: Text) -> None:
-        """Done generating."""
         self.app_state.chat_history.append((ASSISTANT_LABEL, {}, text.value))
 
     @override
     def on_tool_call_created(self, tool_call: ToolCall) -> None:
         self.st_placeholder = st.empty()
 
+    @override
     def on_tool_call_delta(self, delta: ToolCallDelta, snapshot: ToolCall) -> None:
-        """Done tool call."""
         # TODO: display code
         if delta.type == "code_interpreter":
             assert delta.code_interpreter
@@ -87,6 +83,11 @@ class UIAssistantEventHandler(AssistantEventHandler):
                 for output in delta.code_interpreter.outputs:
                     if output.type == "logs":
                         print(f"\n{output.logs}", flush=True)
+
+    @override
+    def on_tool_call_done(self, tool_call: ToolCall) -> None:
+        # TODO: Store tool type and data for later displaying
+        pass
 
     @override
     def on_event(self, event: AssistantStreamEvent) -> None:
@@ -103,17 +104,14 @@ class UIAssistantEventHandler(AssistantEventHandler):
             kwargs = json.loads(tool.function.arguments)
             tool_name = tool.function.name.replace("Schema", "")
             logger.info(f"Running tool {tool_name}.")
+            # TODO: Displaying here is redundant
             UI_TOOLS[tool_name].render(**kwargs)
 
-            tool_outputs.append(
-                {"tool_call_id": tool.id, "output": "Widget displayed to user."}
-            )
+            tool_outputs.append({"tool_call_id": tool.id, "output": "Widget displayed to user."})
 
         # Submit all tool_outputs at the same time
         response = self.submit_tool_outputs(tool_outputs, run_id)
-        self.app_state.chat_history.append(
-            (ASSISTANT_LABEL, {tool_name: kwargs}, response)
-        )
+        self.app_state.chat_history.append((ASSISTANT_LABEL, {tool_name: kwargs}, response))
 
     def submit_tool_outputs(self, tool_outputs: list, run_id: str) -> str:
         """Use the submit_tool_outputs_stream helper."""
@@ -170,9 +168,7 @@ def get_response(
     with app_state.openai_client.beta.threads.runs.stream(
         thread_id=app_state.openai_thread_id,
         assistant_id=assistant.id,
-        event_handler=UIAssistantEventHandler(
-            app_state=app_state, st_placeholder=st_placeholder
-        ),
+        event_handler=UIAssistantEventHandler(app_state=app_state, st_placeholder=st_placeholder),
     ) as stream:
         stream.until_done()
 
@@ -200,7 +196,7 @@ def display_history(app_state: AppState) -> None:
 
 @ensure_app_state
 def main(app_state: AppState) -> None:
-    """Main layout."""
+    """App layout."""
     st.title(TITLE)
     if not app_state.openai_thread_id:
         thread = app_state.openai_client.beta.threads.create()

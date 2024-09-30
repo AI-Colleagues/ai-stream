@@ -1,6 +1,7 @@
 """Entry script."""
 
 import atexit
+import os
 import streamlit as st
 from moto.server import ThreadedMotoServer
 from openai import OpenAI
@@ -12,6 +13,7 @@ from ai_stream.db.aws import dump_data_to_disk
 from ai_stream.db.aws import load_data_from_disk
 from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
+from ai_stream.utils.registries import page_defaults_registry
 
 
 logger = get_logger(__name__)
@@ -42,6 +44,9 @@ def load_tables():
         table_name = table_cls.Meta.table_name
         setattr(app_state, table_name, items_dict)
 
+    if not app_state.openai_client:
+        return
+
     # Load assistants
     # TODO: Add pagination in case number of assistants > 100
     for asst in app_state.openai_client.beta.assistants.list(limit=100):
@@ -54,16 +59,25 @@ def main(app_state: AppState) -> None:
     from ai_stream.utils.registries import page_registry
 
     # Define page and navigation
-    project_id = st.sidebar.text_input("OpenAI Project ID", type="password")
+    project_id = st.sidebar.text_input(
+        "OpenAI Project ID", type="password", value=os.environ.get("PROJECT_ID", "")
+    )
     kwargs = {"project": project_id} if project_id else {}
-    api_key = st.sidebar.text_input("OpenAI Key", type="password")
+    api_key = st.sidebar.text_input(
+        "OpenAI Key", type="password", value=os.environ.get("OPENAI_API_KEY", "")
+    )
+    pg = st.navigation(page_registry)
+
     if api_key:
         client = OpenAI(api_key=api_key, **kwargs)
         app_state.openai_client = client
+    # Skip the api_key checking for random_stream
+    elif page_defaults_registry[pg._page].skip_api_key:
+        pass
     else:
+        st.warning("Your OpenAI API key is needed for using this page.")
         st.stop()
     load_tables()
-    pg = st.navigation(page_registry)
     pg.run()
 
 
