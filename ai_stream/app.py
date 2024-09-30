@@ -60,11 +60,11 @@ def main(app_state: AppState) -> None:
 
     # Define page and navigation
     project_id = st.sidebar.text_input(
-        "OpenAI Project ID", type="password", value=os.environ.get("PROJECT_ID1", "")
+        "OpenAI Project ID", type="password", value=os.environ.get("PROJECT_ID", "")
     )
     kwargs = {"project": project_id} if project_id else {}
     api_key = st.sidebar.text_input(
-        "OpenAI Key", type="password", value=os.environ.get("OPENAI_API_KEY1", "")
+        "OpenAI Key", type="password", value=os.environ.get("OPENAI_API_KEY", "")
     )
     pg = st.navigation(page_registry)
 
