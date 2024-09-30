@@ -62,13 +62,16 @@ def main(app_state: AppState) -> None:
     api_key = st.sidebar.text_input(
         "OpenAI Key", type="password", value=os.environ.get("OPENAI_API_KEY", "")
     )
+    pg = st.navigation(page_registry)
     if api_key:
         client = OpenAI(api_key=api_key, **kwargs)
         app_state.openai_client = client
+    # Skip the api_key checking for random_stream
+    elif pg._url_path != "random_stream":
+        pass
     else:
         st.stop()
     load_tables()
-    pg = st.navigation(page_registry)
     pg.run()
 
 

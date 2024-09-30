@@ -23,18 +23,25 @@ def register_page(cls: type[AppPage]) -> None:
     """Register an AppPage, sorted by weight."""
     _registry_dict[cls.group][cls.weight] = cls.page
     # Keep the group sorted
-    page_registry[cls.group] = list(
-        dict(sorted(_registry_dict[cls.group].items())).values()
-    )
+    page_registry[cls.group] = list(dict(sorted(_registry_dict[cls.group].items())).values())
 
 
 @register_page
-class MainPage(AppPage):
-    """Main page."""
+class RandomStreamPage(AppPage):
+    """Random Stream page."""
+
+    group: str = ""
+    page: StreamlitPage = st.Page("random_stream.py", title="Random Stream", icon="🎰")
+    weight: float = 0
+
+
+@register_page
+class AIStreamPage(AppPage):
+    """AI Stream page."""
 
     group: str = ""
     page: StreamlitPage = st.Page("stream.py", title="AI Stream", icon="📱")
-    weight: float = 0
+    weight: float = 1
 
 
 # Configurations
@@ -43,9 +50,7 @@ class PromptsPage(AppPage):
     """Prompts page."""
 
     group: str = "Assistant Assembly"
-    page: StreamlitPage = st.Page(
-        "configurations/prompts.py", title="Prompts", icon="📝"
-    )
+    page: StreamlitPage = st.Page("configurations/prompts.py", title="Prompts", icon="📝")
     weight: float = 0
 
 
@@ -65,7 +70,5 @@ class AssistantsPage(AppPage):
     """Main page."""
 
     group: str = "Assistant Assembly"
-    page: StreamlitPage = st.Page(
-        "configurations/assistants.py", title="Assistants", icon="🤖"
-    )
+    page: StreamlitPage = st.Page("configurations/assistants.py", title="Assistants", icon="🤖")
     weight: float = 2
