@@ -2,9 +2,9 @@
 
 import streamlit as st
 from ai_stream import TESTING
-from ai_stream.components.assistant import generate_random_response
-from ai_stream.components.messages import AssistantWidgetMessage
+from ai_stream.components.messages import InputWidgetMessage
 from ai_stream.components.messages import UserMessage
+from ai_stream.components.random_assistant import generate_random_response
 
 
 def initialize_session_state():
@@ -23,7 +23,7 @@ def render_history():
 def check_waiting_for_input():
     """Check waiting for input."""
     for entry in st.session_state.history:
-        if isinstance(entry, AssistantWidgetMessage) and not entry.user_input_provided:
+        if isinstance(entry, InputWidgetMessage) and not entry.user_input_provided:
             return True
     return False
 
