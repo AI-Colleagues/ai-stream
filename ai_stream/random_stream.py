@@ -2,9 +2,9 @@
 
 import streamlit as st
 from ai_stream import TESTING
-from ai_stream.components.assistant import generate_random_response
 from ai_stream.components.messages import InputWidgetMessage
 from ai_stream.components.messages import UserMessage
+from ai_stream.components.random_assistant import generate_random_response
 
 
 def initialize_session_state():
