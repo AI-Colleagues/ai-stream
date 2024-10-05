@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from pydantic import Field
 from ai_stream import ASSISTANT_LABEL
 from ai_stream import USER_LABEL
+from ai_stream.components.tools import Tool
 from ai_stream.components.tools import register_tool
 
 
@@ -22,13 +23,13 @@ def register_message(cls):
     return cls
 
 
-class Message(ABC):
+class Message(Tool, ABC):
     """Base class for messages."""
 
-    def __init__(self, role: str, content: str | None = None):
-        """Initialize the message."""
-        self.role = role
-        self.content = content
+    content: str | None = Field(None)
+
+    def _run(self) -> None:
+        pass
 
     @abstractmethod
     def render(self) -> None:
@@ -40,10 +41,6 @@ class Message(ABC):
 class UserMessage(Message):
     """User message."""
 
-    def __init__(self, content: str):
-        """Initialize the user message."""
-        super().__init__(USER_LABEL, content)
-
     def render(self) -> None:
         """Render the user message as text."""
         with st.chat_message(USER_LABEL):
@@ -54,10 +51,6 @@ class UserMessage(Message):
 class AssistantMessage(Message):
     """Assistant message."""
 
-    def __init__(self, content: str):
-        """Initialize the assistant message."""
-        super().__init__(ASSISTANT_LABEL, content)
-
     def render(self) -> None:
         """Render the assistant message as text."""
         with st.chat_message(ASSISTANT_LABEL):
@@ -67,14 +60,11 @@ class AssistantMessage(Message):
 class InputWidget(Message):
     """Base class for assistant messages with input widgets."""
 
-    def __init__(self, widget_config: dict[str, Any], key: str, **kwargs: dict):
-        """Initialize the input widget message."""
-        super().__init__(ASSISTANT_LABEL)
-        self.widget_config = widget_config
-        self.key = key
-        self.value: Any = None
-        self.disabled: bool = False
-        self.block_chat_input: bool = False
+    widget_config: dict[str, Any]
+    key: str
+    value: Any = None
+    disabled: bool = False
+    block_chat_input: bool = False
 
     def disable(self) -> None:
         """Disable input."""
@@ -115,13 +105,7 @@ class TextInput(InputWidget):
     name: str = "TextInput"
     description: str = "Tool for displaying a single-line text input widget."
 
-    def __init__(self, widget_config: dict[str, Any], key: str):
-        """Initialise and set block_chat_input to True."""
-        super().__init__(widget_config, key)
-        self.block_chat_input = True
-
-    def _run(self) -> None:
-        pass
+    block_chat_input: bool = True
 
     def render(self) -> None:
         """Render the text input widget."""
@@ -244,10 +228,7 @@ class NumberInput(InputWidget):
 class TextArea(InputWidget):
     """Assistant message with a text area widget."""
 
-    def __init__(self, widget_config: dict[str, Any], key: str):
-        """Initialise and set block_chat_input to True."""
-        super().__init__(widget_config, key)
-        self.block_chat_input = True
+    block_chat_input: bool = True
 
     def render(self) -> None:
         """Render the text area widget."""
@@ -264,10 +245,7 @@ class TextArea(InputWidget):
 class OutputWidget(Message):
     """Base class for assistant messages with output widgets."""
 
-    def __init__(self, widget_data: Any):
-        """Initialize the output widget message."""
-        super().__init__(ASSISTANT_LABEL)
-        self.widget_data = widget_data
+    widget_data: Any
 
     @abstractmethod
     def render(self) -> None:

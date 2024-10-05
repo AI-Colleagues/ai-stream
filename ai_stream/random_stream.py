@@ -36,7 +36,7 @@ def main(app_state: AppState):
         disabled=disable_input,
     )
     if user_message_text:
-        user_message = UserMessage(user_message_text)
+        user_message = UserMessage(content=user_message_text)
         app_state.history.append(user_message)
 
         assistant_response = generate_random_response(user_message_text, len(app_state.history))

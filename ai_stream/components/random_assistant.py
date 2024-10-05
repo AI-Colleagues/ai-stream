@@ -33,7 +33,7 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
             "How does that make you feel?",
         ]
         assistant_message = random.choice(possible_messages)
-        return AssistantMessage(assistant_message)
+        return AssistantMessage(content=assistant_message)
 
     elif response_type == "output_widget":
         possible_output_widgets = [
@@ -72,11 +72,13 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
         message_class = message_registry.get(widget_type)
 
         if message_class:
-            assistant_output_widget_message = message_class(widget_data)
+            assistant_output_widget_message = message_class(widget_data=widget_data)
             return assistant_output_widget_message
         else:
             # Handle unknown widget type
-            assistant_message = AssistantMessage("Sorry, I encountered an unknown widget type.")
+            assistant_message = AssistantMessage(
+                content="Sorry, I encountered an unknown widget type."
+            )
             return assistant_message
 
     else:  # response_type == "input_widget"
@@ -139,9 +141,11 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
         message_class = message_registry.get(widget_type)
 
         if message_class:
-            assistant_widget_message = message_class(widget_config, widget_key)
+            assistant_widget_message = message_class(widget_config=widget_config, key=widget_key)
             return assistant_widget_message
         else:
             # Handle unknown widget type
-            assistant_message = AssistantMessage("Sorry, I encountered an unknown widget type.")
+            assistant_message = AssistantMessage(
+                content="Sorry, I encountered an unknown widget type."
+            )
             return assistant_message
