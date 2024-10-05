@@ -37,7 +37,7 @@ class FunctionParameter:
 
 
 def load_from_json_schema(schema: str | dict) -> dict:
-    """Converts a JSON Schema into an OpenAI function dictionary."""
+    """Convert a JSON Schema into an OpenAI function dictionary."""
     if isinstance(schema, str):
         schema_dict = json.loads(schema)
     else:
@@ -86,13 +86,11 @@ def add_function(app_state: AppState) -> None:
 def remove_function(app_state: AppState, function_id: str, function_name: str) -> None:
     """Remove the given function."""
     del app_state.functions[function_id]
-    item = FunctionsTable.get(function_id, function_name)
+    item = FunctionsTable.get(function_id)
     item.delete()
 
 
-def build_json_schema(
-    function_name: str, function_description: str, parameters: dict
-) -> tuple:
+def build_json_schema(function_name: str, function_description: str, parameters: dict) -> tuple:
     """Build json schema given the function parameters."""
     required_params = [
         param.name for param in parameters.values() if param.required and param.name
@@ -156,9 +154,7 @@ def parameter_input(param: FunctionParameter, param_id: str) -> FunctionParamete
         index=param.type_index,
         key=f"type_{param_id}",
     )
-    new_required = st.checkbox(
-        "Required", value=param.required, key=f"required_{param_id}"
-    )
+    new_required = st.checkbox("Required", value=param.required, key=f"required_{param_id}")
     # For enum
     if new_type in ["string", "number", "integer"]:
         enum_input = st.text_input(
@@ -211,7 +207,7 @@ def get_function(app_state: AppState, function_id: str, function_name: str) -> d
     """Get the function dict given its ID."""
     if app_state.current_function.get("id", "") != function_id:  # Needs reloading
         try:
-            item = FunctionsTable.get(function_id, function_name)
+            item = FunctionsTable.get(function_id)
         except DoesNotExist:
             item = None
         if item:
@@ -279,7 +275,7 @@ def display_function(selected_function: dict, function_id: str) -> tuple:
 
 @ensure_app_state
 def main(app_state: AppState) -> None:
-    """Main layout."""
+    """App layout."""
     st.title("OpenAI Function Schema Builder")
 
     # Button to add a new function
@@ -309,7 +305,7 @@ def main(app_state: AppState) -> None:
 
     if st.button("Save Function"):
         try:
-            existing_function = FunctionsTable.get(function_id, new_name)
+            existing_function = FunctionsTable.get(function_id)
         except DoesNotExist:
             existing_function = None
         if existing_function:
@@ -317,31 +313,19 @@ def main(app_state: AppState) -> None:
 
             if existing_function.used_by:
                 for assistant_id in existing_function.used_by:
-                    assistant = app_state.openai_client.beta.assistants.retrieve(
-                        assistant_id
-                    )
+                    assistant = app_state.openai_client.beta.assistants.retrieve(assistant_id)
                     tools = [
                         tool.to_dict()
                         for tool in assistant.tools
                         if tool.function.name != function_name
                     ]  # Remove old function
                     tools.append({"type": "function", "function": schema})
-                    app_state.openai_client.beta.assistants.update(
-                        assistant_id, tools=tools
-                    )
-            st.success(
-                f"Function has been saved with name {new_name} and "
-                f"ID {function_id}."
-            )
+                    app_state.openai_client.beta.assistants.update(assistant_id, tools=tools)
+            st.success(f"Function has been saved with name {new_name} and " f"ID {function_id}.")
         else:
-            item = FunctionsTable(
-                id=function_id, name=new_name, used_by=[], value=schema
-            )
+            item = FunctionsTable(id=function_id, name=new_name, used_by=[], value=schema)
             item.save()
-            st.success(
-                f"Function has been saved with name {new_name} and "
-                f"ID {function_id}."
-            )
+            st.success(f"Function has been saved with name {new_name} and " f"ID {function_id}.")
         app_state.functions[function_id] = new_name
 
     # Option to remove the function
