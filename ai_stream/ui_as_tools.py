@@ -7,12 +7,12 @@ import streamlit as st
 from langchain.pydantic_v1 import BaseModel
 from langchain.pydantic_v1 import Field
 from streamlit.runtime.uploaded_file_manager import UploadedFile
-from ai_stream.components.tools import StreamTool
+from ai_stream.components.tools import Tool
 from ai_stream.components.tools import register_tool
 
 
 @register_tool
-class FileUploader(StreamTool):
+class FileUploader(Tool):
     """Tool for generating a Streamlit file_uploader."""
 
     class FileUploaderSchema(BaseModel):
@@ -93,7 +93,7 @@ class FileUploader(StreamTool):
 
 
 @register_tool
-class DataFrame(StreamTool):
+class DataFrame(Tool):
     """Tool for generating a Streamlit dataframe."""
 
     class DataFrameSchema(BaseModel):

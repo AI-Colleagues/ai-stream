@@ -15,7 +15,7 @@ from streamlit.delta_generator import DeltaGenerator
 from ai_stream import ASSISTANT_LABEL
 from ai_stream import TESTING
 from ai_stream import USER_LABEL
-from ai_stream.components.tools import UI_TOOLS
+from ai_stream.components.tools import TOOLS
 from ai_stream.components.tools import tools_to_openai_functions
 from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
@@ -105,7 +105,7 @@ class UIAssistantEventHandler(AssistantEventHandler):
             tool_name = tool.function.name.replace("Schema", "")
             logger.info(f"Running tool {tool_name}.")
             # TODO: Displaying here is redundant
-            UI_TOOLS[tool_name].render(**kwargs)
+            TOOLS[tool_name].render(**kwargs)
 
             tool_outputs.append({"tool_call_id": tool.id, "output": "Widget displayed to user."})
 
@@ -186,7 +186,7 @@ def display_history(app_state: AppState) -> None:
             with st.chat_message(ASSISTANT_LABEL):
                 if tool_call:
                     for tool_name, tool_input in tool_call.items():
-                        tool_output = UI_TOOLS[tool_name].render(**tool_input)
+                        tool_output = TOOLS[tool_name].render(**tool_input)
                         if tool_output and i == len(history) - 1:
                             app_state.recent_tool_output.update(tool_output)
                 st.write(response)
