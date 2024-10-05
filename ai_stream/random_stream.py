@@ -16,14 +16,16 @@ def initialize_session_state():
 
 def render_history():
     """Display chat history."""
-    for entry in st.session_state.history:
+    for i, entry in enumerate(st.session_state.history):
+        if hasattr(entry, "disable") and i != len(st.session_state.history) - 1:
+            entry.disable()
         entry.render()
 
 
-def check_waiting_for_input():
+def check_block_chat_input():
     """Check waiting for input."""
     for entry in st.session_state.history:
-        if isinstance(entry, InputWidgetMessage) and not entry.user_input_provided:
+        if isinstance(entry, InputWidgetMessage) and not entry.disabled and not entry.value:
             return True
     return False
 
@@ -32,10 +34,11 @@ def main():
     """App layout."""
     initialize_session_state()
     render_history()
-    if check_waiting_for_input():
-        st.stop()
-
-    user_message_text = st.chat_input("Type your message")
+    disable_input = check_block_chat_input()
+    user_message_text = st.chat_input(
+        placeholder="Please type input above" if disable_input else "Type your message",
+        disabled=disable_input,
+    )
     if user_message_text:
         user_message = UserMessage(user_message_text)
         st.session_state.history.append(user_message)
