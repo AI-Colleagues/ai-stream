@@ -5,8 +5,8 @@ from abc import abstractmethod
 from typing import Any
 import pandas as pd
 import streamlit as st
-from pydantic import BaseModel
-from pydantic import Field
+from langchain_core.pydantic_v1 import BaseModel
+from langchain_core.pydantic_v1 import Field
 from ai_stream import ASSISTANT_LABEL
 from ai_stream import USER_LABEL
 from ai_stream.components.tools import Tool
@@ -86,7 +86,7 @@ class TextInput(InputWidget):
         label: str = Field(..., description="A short label explaining the input.")
         value: str | None = Field("", description="The initial text value of the input.")
         max_chars: int | None = Field(None, description="Maximum number of characters allowed.")
-        key: str | int | None = Field(None, description="Unique key for the widget.")
+        key: str | None = Field(None, description="Unique key for the widget.")
         type: str | None = Field("default", description="Type of input: 'default' or 'password'.")
         help: str | None = Field(None, description="Tooltip displayed next to the input.")
         autocomplete: str | None = Field(

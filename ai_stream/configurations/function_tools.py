@@ -38,7 +38,7 @@ class FunctionParameter:
 
 
 def load_from_json_schema(config_name: str, schema: str | dict) -> dict:
-    """Convert a JSON Schema into an OpenAI function dictionary."""
+    """Convert a JSON Schema into a function dictionary."""
     if isinstance(schema, str):
         schema_dict = json.loads(schema)
     else:
@@ -81,7 +81,7 @@ def add_function(app_state: AppState) -> None:
     """Add a new function."""
     new_id = create_id()
     app_state.functions = OrderedDict(
-        [(new_id, new_function()["config_name"])] + list(app_state.functions.items())
+        [(new_id, "NewFunction")] + list(app_state.functions.items())
     )
 
 
@@ -188,7 +188,7 @@ def parameter_input(param: FunctionParameter, param_id: str) -> FunctionParamete
     )
 
 
-def select_function(functions: dict) -> tuple:
+def choose_function(functions: dict) -> tuple:
     """Select a function to edit and return its id."""
     if not functions:
         st.warning("No functions yet. Click 'New Function' to create one.")
@@ -244,11 +244,12 @@ def get_function(app_state: AppState, function_id: str) -> dict:
         return stored_function
 
 
-def display_function(selected_function: dict, function_id: str) -> tuple:
+def display_function(config_name: str, selected_function: dict, function_id: str) -> tuple:
     """Display the selected function."""
     function_names = list(TOOLS.keys())
     try:
-        index = function_names.index(selected_function["name"])
+        function_name = selected_function["name"]
+        index = function_names.index(function_name)
     except ValueError:
         index = 0
     new_name = st.selectbox(
@@ -257,6 +258,10 @@ def display_function(selected_function: dict, function_id: str) -> tuple:
         index=index,
         key=f"function_name_{function_id}",
     )
+    schema = getattr(TOOLS[new_name], f"{new_name}Schema").schema()
+    schema["parameters"] = {"properties": schema["properties"]}
+    if not selected_function["parameters"]:
+        selected_function.update(load_from_json_schema(config_name, schema))
     new_description = st.text_area(
         "Function Description",
         value=selected_function.get("description", ""),
@@ -292,14 +297,15 @@ def main(app_state: AppState) -> None:
     if st.button("New Function"):
         add_function(app_state)
 
-    function_id, function_name = select_function(app_state.functions)
+    function_id, config_name = choose_function(app_state.functions)
 
     # Now get the selected function
     selected_function = get_function(app_state, function_id)
+    function_name = selected_function["name"]
 
     # Display function
     new_name, new_description, updated_parameters = display_function(
-        selected_function, function_id
+        config_name, selected_function, function_id
     )
 
     # Build the JSON schema using the function
@@ -313,7 +319,7 @@ def main(app_state: AppState) -> None:
 
     st.code(json_schema, language="json")
 
-    config_name = st.text_input("Config Name", value=selected_function["config_name"])
+    config_name = st.text_input("Config Name", value=config_name)
 
     if st.button("Save Function", disabled=not config_name):
         try:
@@ -340,7 +346,7 @@ def main(app_state: AppState) -> None:
             item = FunctionsTable(id=function_id, name=config_name, used_by=[], value=schema)
             item.save()
             st.success(f"Function has been saved with name {new_name} and " f"ID {function_id}.")
-        app_state.functions[function_id] = new_name
+        app_state.functions[function_id] = config_name
 
     # Option to remove the function
     if st.button("Remove Function"):

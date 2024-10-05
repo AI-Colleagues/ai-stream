@@ -34,7 +34,6 @@ def on_startup() -> None:
     atexit.register(dump_data_to_disk)
 
 
-@st.cache_resource
 def load_tables():
     """Load IDs and names from DB."""
     app_state: AppState = st.session_state.app_state
