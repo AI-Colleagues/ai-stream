@@ -96,7 +96,6 @@ class TextInputMessage(InputWidgetMessage):
         """Render the text input widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-
             self.value = st.text_input(
                 label="",
                 value=self.value or "",
@@ -113,7 +112,6 @@ class SelectboxMessage(InputWidgetMessage):
         """Render the selectbox widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-
             options = self.widget_config["options"]
             current_value = self.value if self.value in options else options[0]
             self.value = st.selectbox(
@@ -133,7 +131,6 @@ class SliderMessage(InputWidgetMessage):
         """Render the slider widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-
             default_value = self.widget_config.get("default", self.widget_config["min_value"])
             self.value = st.slider(
                 label="",
@@ -153,7 +150,6 @@ class CheckboxMessage(InputWidgetMessage):
         """Render the checkbox widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-
             self.value = st.checkbox(
                 label="",
                 value=self.value if self.value is not None else False,
@@ -170,7 +166,6 @@ class DateInputMessage(InputWidgetMessage):
         """Render the date input widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-
             self.value = st.date_input(
                 label="",
                 value=self.value or None,
@@ -187,7 +182,6 @@ class TimeInputMessage(InputWidgetMessage):
         """Render the time input widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-
             self.value = st.time_input(
                 label="",
                 value=self.value or None,
@@ -204,7 +198,6 @@ class NumberInputMessage(InputWidgetMessage):
         """Render the number input widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-
             default_value = self.widget_config.get("default", self.widget_config["min_value"])
             self.value = st.number_input(
                 label="",
@@ -229,7 +222,6 @@ class TextAreaMessage(InputWidgetMessage):
         """Render the text area widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-
             self.value = st.text_area(
                 label="",
                 value=self.value or "",
