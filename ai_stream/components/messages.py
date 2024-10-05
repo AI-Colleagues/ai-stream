@@ -61,7 +61,6 @@ class InputWidget(Message):
     """Base class for assistant messages with input widgets."""
 
     widget_config: dict[str, Any]
-    key: str
     value: Any = None
     disabled: bool = False
     block_chat_input: bool = False
@@ -118,16 +117,7 @@ class Selectbox(InputWidget):
     def render(self) -> None:
         """Render the selectbox widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            options = self.widget_config["options"]
-            current_value = self.value if self.value in options else options[0]
-            self.value = st.selectbox(
-                label="",
-                options=options,
-                index=options.index(current_value),
-                key=self.key,
-                disabled=self.disabled,
-            )
+            self.value = st.selectbox(disabled=self.disabled, **self.widget_config)
 
 
 @register_message
@@ -137,15 +127,9 @@ class Slider(InputWidget):
     def render(self) -> None:
         """Render the slider widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            default_value = self.widget_config.get("default", self.widget_config["min_value"])
             self.value = st.slider(
-                label="",
-                min_value=self.widget_config["min_value"],
-                max_value=self.widget_config["max_value"],
-                value=self.value if self.value is not None else default_value,
-                key=self.key,
                 disabled=self.disabled,
+                **self.widget_config,
             )
 
 
@@ -156,13 +140,7 @@ class Checkbox(InputWidget):
     def render(self) -> None:
         """Render the checkbox widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            self.value = st.checkbox(
-                label="",
-                value=self.value if self.value is not None else False,
-                key=self.key,
-                disabled=self.disabled,
-            )
+            self.value = st.checkbox(disabled=self.disabled, **self.widget_config)
 
 
 @register_message
@@ -172,13 +150,7 @@ class DateInput(InputWidget):
     def render(self) -> None:
         """Render the date input widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            self.value = st.date_input(
-                label="",
-                value=self.value or None,
-                key=self.key,
-                disabled=self.disabled,
-            )
+            self.value = st.date_input(disabled=self.disabled, **self.widget_config)
 
 
 @register_message
@@ -188,13 +160,7 @@ class TimeInput(InputWidget):
     def render(self) -> None:
         """Render the time input widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            self.value = st.time_input(
-                label="",
-                value=self.value or None,
-                key=self.key,
-                disabled=self.disabled,
-            )
+            self.value = st.time_input(disabled=self.disabled, **self.widget_config)
 
 
 @register_message
@@ -204,16 +170,7 @@ class NumberInput(InputWidget):
     def render(self) -> None:
         """Render the number input widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            default_value = self.widget_config.get("default", self.widget_config["min_value"])
-            self.value = st.number_input(
-                label="",
-                min_value=self.widget_config["min_value"],
-                max_value=self.widget_config["max_value"],
-                value=self.value if self.value is not None else default_value,
-                key=self.key,
-                disabled=self.disabled,
-            )
+            self.value = st.number_input(disabled=self.disabled, **self.widget_config)
 
 
 @register_message
@@ -225,13 +182,7 @@ class TextArea(InputWidget):
     def render(self) -> None:
         """Render the text area widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            self.value = st.text_area(
-                label="",
-                value=self.value or "",
-                key=self.key,
-                disabled=self.disabled,
-            )
+            self.value = st.text_area(disabled=self.disabled, **self.widget_config)
 
 
 class OutputWidget(Message):

@@ -82,14 +82,13 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
             return assistant_message
 
     else:  # response_type == "input_widget"
-        widget_key = f"widget_{message_counter}"
+        key = {"key": f"widget_{message_counter}"}
 
         possible_widgets = [
             {
                 "widget_type": "TextInput",
                 "widget_config": {
                     "label": "Assistant asks: Please provide your name:",
-                    "key": widget_key,
                 },
             },
             {
@@ -105,7 +104,7 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
                     "label": "Assistant asks: Rate your experience from 1 to 10:",
                     "min_value": 1,
                     "max_value": 10,
-                    "default": 5,
+                    "value": 5,
                 },
             },
             {
@@ -118,7 +117,10 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
             },
             {
                 "widget_type": "TimeInput",
-                "widget_config": {"label": "Assistant asks: What time works best for you?"},
+                "widget_config": {
+                    "label": "Assistant asks: What time works best for you?",
+                    "value": "now",
+                },
             },
             {
                 "widget_type": "NumberInput",
@@ -126,7 +128,7 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
                     "label": "Assistant asks: Enter a number:",
                     "min_value": 0,
                     "max_value": 100,
-                    "default": 50,
+                    "value": 50,
                 },
             },
             {
@@ -139,12 +141,13 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
         selected_widget = random.choice(possible_widgets)
         widget_type = selected_widget["widget_type"]
         widget_config = selected_widget["widget_config"]
+        widget_config.update(key)
 
         # Convert widget_type to class name and retrieve from the registry
         message_class = message_registry.get(widget_type)
 
         if message_class:
-            assistant_widget_message = message_class(widget_config=widget_config, key=widget_key)
+            assistant_widget_message = message_class(widget_config=widget_config)
             return assistant_widget_message
         else:
             # Handle unknown widget type
