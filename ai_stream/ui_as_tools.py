@@ -1,35 +1,14 @@
 """Tools for rendering UI."""
 
-from abc import ABC
-from abc import abstractmethod
-from collections.abc import Callable
 from collections.abc import Iterable
 from typing import Any
 from typing import Literal
 import streamlit as st
 from langchain.pydantic_v1 import BaseModel
 from langchain.pydantic_v1 import Field
-from langchain_core.tools import BaseTool
-from langchain_core.utils.function_calling import convert_to_openai_function
 from streamlit.runtime.uploaded_file_manager import UploadedFile
-
-
-UI_TOOLS = {}
-
-
-class StreamTool(BaseTool, ABC):
-    """An abstract class for tools used in AI Stream."""
-
-    @classmethod
-    @abstractmethod
-    def render(cls, **kwargs: dict) -> Any:
-        """The actual rendering action."""
-
-
-def register_tool(cls: type[StreamTool]) -> Callable:
-    """Register a tool."""
-    UI_TOOLS[cls.__name__] = cls
-    return cls
+from ai_stream.components.tools import StreamTool
+from ai_stream.components.tools import register_tool
 
 
 @register_tool
@@ -68,9 +47,7 @@ class FileUploader(StreamTool):
                 "type may not share the same key."
             )
         )
-        help: str = Field(
-            description="A tooltip that gets displayed next to the file uploader."
-        )
+        help: str = Field(description="A tooltip that gets displayed next to the file uploader.")
         # on_change: Callable = Field(
         #     description="An optional callback invoked when this
         # file_uploader's value changes."
@@ -233,25 +210,3 @@ class DataFrame(StreamTool):
     def render(cls, **kwargs: dict) -> None:
         """Call by frontend to render the UI."""
         st.dataframe(**kwargs)  # type: ignore
-
-
-def instantiate_ui_tools() -> list[StreamTool]:
-    """Instantiate all the registered tools."""
-    tools = []
-    for tool_cls in UI_TOOLS.values():
-        tools.append(tool_cls())  # type: ignore
-
-    return tools
-
-
-def tools_to_openai_functions() -> list[dict]:
-    """Convert to OpenAI functions."""
-    tools = []
-    for tool_cls in UI_TOOLS.values():
-        schema_cls_name = f"{tool_cls.__name__}Schema"
-        schema_cls = getattr(tool_cls, schema_cls_name)
-        tools.append(
-            {"type": "function", "function": convert_to_openai_function(schema_cls)}
-        )  # type: ignore
-
-    return tools

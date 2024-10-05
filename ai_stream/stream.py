@@ -15,8 +15,8 @@ from streamlit.delta_generator import DeltaGenerator
 from ai_stream import ASSISTANT_LABEL
 from ai_stream import TESTING
 from ai_stream import USER_LABEL
-from ai_stream.ui_as_tools import UI_TOOLS
-from ai_stream.ui_as_tools import tools_to_openai_functions
+from ai_stream.components.tools import UI_TOOLS
+from ai_stream.components.tools import tools_to_openai_functions
 from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
 
