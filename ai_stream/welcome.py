@@ -10,42 +10,42 @@ def main():
         """
         Read the following Q&A to get an idea of AI Stream.
 
-        ## What is AI Stream?
+        ### What is AI Stream?
 
-        AI Stream aims to accomplish many of your tasks through a conversation
-        with AI assistants. If you need to specify a time, upload a file,
-        select an option, or if you want to see the output as a table, line
-        chart, pyplot, AI Stream does it on demand.
+        AI Stream is designed to help you complete various tasks through
+        conversations with AI assistants. Whether you need to specify a time,
+        upload a file, select an option, or display the output as a table, line
+        chart, or pyplot, AI Stream delivers results just-in-time.
 
-        ## How is AI Stream built?
+        ### How is AI Stream built?
 
-        "How is it possible?" you may ask. The answer is that the AI assistant
-        powering this app renders all input/output widgets through function
-        calls.
+        You might wonder, "How is this possible?" The answer lies in the AI
+        assistant that powers the app, which renders all input and output
+        widgets through function calls.
 
-        ## Can I try it without giving my API key?
+        ### Can I try it without providing my API key?
 
-        To make it simple, we've also built Random Stream, which is AI Stream
-        but without AI, hope it makes sense. Try talking to it, and you will
-        see input and output widgets being randomly displayed. Now imagine that
-        all your requests are accurately replied with texts, images, or input/
-        output widgets. And that's what we want AI Stream to do.
+        To simplify things, we've created Random Stream—essentially AI Stream,
+        but without the AI. Give it a try, and you'll see input and output
+        widgets being randomly displayed. Now, imagine all your requests being
+        accurately answered with text, images, or other input/output widgets.
+        That's what we aim for AI Stream to achieve.
 
-        ## What is Assistant Assembly?
+        ### What is Assistant Assembly?
 
-        OpenAI Assistants are the secret sauce behind AI Stream. To make it
-        work, or to customise your own assistant, you need to create or select
-        a prompt, create or select some tools for it to use, and then assemble
-        them together with an assistant.
+        OpenAI assistants are the "secret sauce" behind AI Stream. To make it
+        work, or to customize your own assistant, you'll need to create or
+        select a prompt, choose some tools for it to use, and then assemble
+        them with the assistant.
 
-        ## Can't I configure assistants on my OpenAI playground?
+        ### Can't I configure assistants in the OpenAI Playground?
 
-        You can, but you still need AI Stream or run your clone to get it work.
-        Besides, another advantage of using the Assembly pipeline in AI Stream
-        is the auto update. Imagine you updated a tool definition that's used
-        by multiple assistants, you probably don't want to update them manually
-        on OpenAI playground. Doing it here, AI Stream automatically updates
-        all the assistants using this tool, sort of an "OTA update" to the
+        Yes, you can. However, you'll still need AI Stream or your own clone to
+        make it work seamlessly. Another benefit of using the Assembly pipeline
+        in AI Stream is the auto-update feature. If you update a tool used by
+        multiple assistants, you likely won't want to update each one manually
+        in the OpenAI Playground. With AI Stream, all assistants using that
+        tool are automatically updated, like an "OTA update" for your
         assistants.
         """
     )
