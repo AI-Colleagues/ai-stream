@@ -7,6 +7,8 @@ import pandas as pd
 import streamlit as st
 from ai_stream import ASSISTANT_LABEL
 from ai_stream import USER_LABEL
+from ai_stream.components.tools import Tool
+from ai_stream.components.tools import register_tool
 
 
 # Message registry to keep track of all message types
@@ -61,17 +63,18 @@ class AssistantMessage(Message):
             st.write(self.content)
 
 
-class InputWidgetMessage(Message):
+class InputWidget(Message, Tool):
     """Base class for assistant messages with input widgets."""
 
-    def __init__(self, widget_config: dict[str, Any], key: str):
+    def __init__(self, widget_config: dict[str, Any], key: str, **kwargs: dict):
         """Initialize the input widget message."""
-        super().__init__(ASSISTANT_LABEL)
+        super(Message).__init__(ASSISTANT_LABEL)
         self.widget_config = widget_config
         self.key = key
         self.value: Any = None
         self.disabled: bool = False
         self.block_chat_input: bool = False
+        super(Tool).__init__(**kwargs)
 
     def disable(self) -> None:
         """Disable input."""
@@ -84,13 +87,17 @@ class InputWidgetMessage(Message):
 
 
 @register_message
-class TextInputMessage(InputWidgetMessage):
+@register_tool
+class TextInput(InputWidget):
     """Assistant message with a text input widget."""
 
-    def __init__(self, widget_config: dict[str, Any], key: str):
+    def __init__(self, **kwargs: dict):
         """Initialise and set block_chat_input to True."""
-        super().__init__(widget_config, key)
+        super().__init__(**kwargs)
         self.block_chat_input = True
+
+    def _run(self) -> None:
+        pass
 
     def render(self) -> None:
         """Render the text input widget."""
@@ -105,7 +112,7 @@ class TextInputMessage(InputWidgetMessage):
 
 
 @register_message
-class SelectboxMessage(InputWidgetMessage):
+class Selectbox(InputWidget):
     """Assistant message with a selectbox widget."""
 
     def render(self) -> None:
@@ -124,7 +131,7 @@ class SelectboxMessage(InputWidgetMessage):
 
 
 @register_message
-class SliderMessage(InputWidgetMessage):
+class Slider(InputWidget):
     """Assistant message with a slider widget."""
 
     def render(self) -> None:
@@ -143,7 +150,7 @@ class SliderMessage(InputWidgetMessage):
 
 
 @register_message
-class CheckboxMessage(InputWidgetMessage):
+class Checkbox(InputWidget):
     """Assistant message with a checkbox widget."""
 
     def render(self) -> None:
@@ -159,7 +166,7 @@ class CheckboxMessage(InputWidgetMessage):
 
 
 @register_message
-class DateInputMessage(InputWidgetMessage):
+class DateInput(InputWidget):
     """Assistant message with a date input widget."""
 
     def render(self) -> None:
@@ -175,7 +182,7 @@ class DateInputMessage(InputWidgetMessage):
 
 
 @register_message
-class TimeInputMessage(InputWidgetMessage):
+class TimeInput(InputWidget):
     """Assistant message with a time input widget."""
 
     def render(self) -> None:
@@ -191,7 +198,7 @@ class TimeInputMessage(InputWidgetMessage):
 
 
 @register_message
-class NumberInputMessage(InputWidgetMessage):
+class NumberInput(InputWidget):
     """Assistant message with a number input widget."""
 
     def render(self) -> None:
@@ -210,7 +217,7 @@ class NumberInputMessage(InputWidgetMessage):
 
 
 @register_message
-class TextAreaMessage(InputWidgetMessage):
+class TextArea(InputWidget):
     """Assistant message with a text area widget."""
 
     def __init__(self, widget_config: dict[str, Any], key: str):
@@ -230,7 +237,7 @@ class TextAreaMessage(InputWidgetMessage):
             )
 
 
-class OutputWidgetMessage(Message):
+class OutputWidget(Message):
     """Base class for assistant messages with output widgets."""
 
     def __init__(self, widget_data: Any):
@@ -245,7 +252,7 @@ class OutputWidgetMessage(Message):
 
 
 @register_message
-class LineChartMessage(OutputWidgetMessage):
+class LineChart(OutputWidget):
     """Assistant message that displays a line chart."""
 
     def render(self) -> None:
@@ -257,7 +264,7 @@ class LineChartMessage(OutputWidgetMessage):
 
 
 @register_message
-class BarChartMessage(OutputWidgetMessage):
+class BarChart(OutputWidget):
     """Assistant message that displays a bar chart."""
 
     def render(self) -> None:
@@ -269,7 +276,7 @@ class BarChartMessage(OutputWidgetMessage):
 
 
 @register_message
-class ImageMessage(OutputWidgetMessage):
+class Image(OutputWidget):
     """Assistant message that displays an image."""
 
     def render(self) -> None:
@@ -283,7 +290,7 @@ class ImageMessage(OutputWidgetMessage):
 
 
 @register_message
-class TableMessage(OutputWidgetMessage):
+class Table(OutputWidget):
     """Assistant message that displays a table."""
 
     def render(self) -> None:
@@ -295,7 +302,7 @@ class TableMessage(OutputWidgetMessage):
 
 
 @register_message
-class MarkdownMessage(OutputWidgetMessage):
+class Markdown(OutputWidget):
     """Assistant message that displays markdown content."""
 
     def render(self) -> None:
