@@ -33,21 +33,21 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
             "How does that make you feel?",
         ]
         assistant_message = random.choice(possible_messages)
-        return AssistantMessage(assistant_message)
+        return AssistantMessage(content=assistant_message)
 
     elif response_type == "output_widget":
         possible_output_widgets = [
-            {"widget_type": "LineChartMessage", "widget_data": np.random.randn(20, 3).tolist()},
-            {"widget_type": "BarChartMessage", "widget_data": np.random.randn(20, 3).tolist()},
+            {"widget_type": "LineChart", "widget_data": np.random.randn(20, 3).tolist()},
+            {"widget_type": "BarChart", "widget_data": np.random.randn(20, 3).tolist()},
             {
-                "widget_type": "ImageMessage",
+                "widget_type": "Image",
                 "widget_data": {
                     "url": "https://via.placeholder.com/150",
                     "caption": "A placeholder image",
                 },
             },
             {
-                "widget_type": "TableMessage",
+                "widget_type": "Table",
                 "widget_data": {
                     "Column 1": ["A", "B", "C"],
                     "Column 2": [1, 2, 3],
@@ -55,7 +55,7 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
                 },
             },
             {
-                "widget_type": "MarkdownMessage",
+                "widget_type": "Markdown",
                 "widget_data": {
                     "content": (
                         "### This is a Markdown header\n\nHere is some **bold** "
@@ -72,60 +72,67 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
         message_class = message_registry.get(widget_type)
 
         if message_class:
-            assistant_output_widget_message = message_class(widget_data)
+            assistant_output_widget_message = message_class(widget_data=widget_data)
             return assistant_output_widget_message
         else:
             # Handle unknown widget type
-            assistant_message = AssistantMessage("Sorry, I encountered an unknown widget type.")
+            assistant_message = AssistantMessage(
+                content="Sorry, I encountered an unknown widget type."
+            )
             return assistant_message
 
     else:  # response_type == "input_widget"
-        widget_key = f"widget_{message_counter}"
+        key = {"key": f"widget_{message_counter}"}
 
         possible_widgets = [
             {
-                "widget_type": "TextInputMessage",
-                "widget_config": {"label": "Assistant asks: Please provide your name:"},
+                "widget_type": "TextInput",
+                "widget_config": {
+                    "label": "Assistant asks: Please provide your name:",
+                },
             },
             {
-                "widget_type": "SelectboxMessage",
+                "widget_type": "Selectbox",
                 "widget_config": {
                     "label": "Assistant asks: Choose your favorite color:",
                     "options": ["Red", "Green", "Blue", "Yellow", "Purple", "Orange"],
                 },
             },
             {
-                "widget_type": "SliderMessage",
+                "widget_type": "Slider",
                 "widget_config": {
                     "label": "Assistant asks: Rate your experience from 1 to 10:",
                     "min_value": 1,
                     "max_value": 10,
-                    "default": 5,
+                    "value": 5,
                 },
             },
             {
-                "widget_type": "CheckboxMessage",
+                "widget_type": "Checkbox",
                 "widget_config": {"label": "Assistant asks: Do you agree with the terms?"},
             },
             {
-                "widget_type": "DateInputMessage",
+                "widget_type": "DateInput",
                 "widget_config": {"label": "Assistant asks: Select your birth date:"},
             },
             {
-                "widget_type": "TimeInputMessage",
-                "widget_config": {"label": "Assistant asks: What time works best for you?"},
+                "widget_type": "TimeInput",
+                "widget_config": {
+                    "label": "Assistant asks: What time works best for you?",
+                    "value": "now",
+                },
             },
             {
-                "widget_type": "NumberInputMessage",
+                "widget_type": "NumberInput",
                 "widget_config": {
                     "label": "Assistant asks: Enter a number:",
                     "min_value": 0,
                     "max_value": 100,
-                    "default": 50,
+                    "value": 50,
                 },
             },
             {
-                "widget_type": "TextAreaMessage",
+                "widget_type": "TextArea",
                 "widget_config": {
                     "label": "Assistant asks: Please describe your issue in detail:"
                 },
@@ -134,14 +141,17 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
         selected_widget = random.choice(possible_widgets)
         widget_type = selected_widget["widget_type"]
         widget_config = selected_widget["widget_config"]
+        widget_config.update(key)
 
         # Convert widget_type to class name and retrieve from the registry
         message_class = message_registry.get(widget_type)
 
         if message_class:
-            assistant_widget_message = message_class(widget_config, widget_key)
+            assistant_widget_message = message_class(widget_config=widget_config)
             return assistant_widget_message
         else:
             # Handle unknown widget type
-            assistant_message = AssistantMessage("Sorry, I encountered an unknown widget type.")
+            assistant_message = AssistantMessage(
+                content="Sorry, I encountered an unknown widget type."
+            )
             return assistant_message

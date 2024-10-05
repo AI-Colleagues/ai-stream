@@ -5,8 +5,12 @@ from abc import abstractmethod
 from typing import Any
 import pandas as pd
 import streamlit as st
+from pydantic import BaseModel
+from pydantic import Field
 from ai_stream import ASSISTANT_LABEL
 from ai_stream import USER_LABEL
+from ai_stream.components.tools import Tool
+from ai_stream.components.tools import register_tool
 
 
 # Message registry to keep track of all message types
@@ -19,13 +23,13 @@ def register_message(cls):
     return cls
 
 
-class Message(ABC):
+class Message(Tool, ABC):
     """Base class for messages."""
 
-    def __init__(self, role: str, content: str | None = None):
-        """Initialize the message."""
-        self.role = role
-        self.content = content
+    content: str | None = Field(None)
+
+    def _run(self) -> None:
+        pass
 
     @abstractmethod
     def render(self) -> None:
@@ -37,10 +41,6 @@ class Message(ABC):
 class UserMessage(Message):
     """User message."""
 
-    def __init__(self, content: str):
-        """Initialize the user message."""
-        super().__init__(USER_LABEL, content)
-
     def render(self) -> None:
         """Render the user message as text."""
         with st.chat_message(USER_LABEL):
@@ -51,27 +51,19 @@ class UserMessage(Message):
 class AssistantMessage(Message):
     """Assistant message."""
 
-    def __init__(self, content: str):
-        """Initialize the assistant message."""
-        super().__init__(ASSISTANT_LABEL, content)
-
     def render(self) -> None:
         """Render the assistant message as text."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.content)
 
 
-class InputWidgetMessage(Message):
+class InputWidget(Message):
     """Base class for assistant messages with input widgets."""
 
-    def __init__(self, widget_config: dict[str, Any], key: str):
-        """Initialize the input widget message."""
-        super().__init__(ASSISTANT_LABEL)
-        self.widget_config = widget_config
-        self.key = key
-        self.value: Any = None
-        self.disabled: bool = False
-        self.block_chat_input: bool = False
+    widget_config: dict[str, Any]
+    value: Any = None
+    disabled: bool = False
+    block_chat_input: bool = False
 
     def disable(self) -> None:
         """Disable input."""
@@ -84,159 +76,122 @@ class InputWidgetMessage(Message):
 
 
 @register_message
-class TextInputMessage(InputWidgetMessage):
+@register_tool
+class TextInput(InputWidget):
     """Assistant message with a text input widget."""
 
-    def __init__(self, widget_config: dict[str, Any], key: str):
-        """Initialise and set block_chat_input to True."""
-        super().__init__(widget_config, key)
-        self.block_chat_input = True
+    class TextInputSchema(BaseModel):
+        """Schema for TextInput."""
+
+        label: str = Field(..., description="A short label explaining the input.")
+        value: str | None = Field("", description="The initial text value of the input.")
+        max_chars: int | None = Field(None, description="Maximum number of characters allowed.")
+        key: str | int | None = Field(None, description="Unique key for the widget.")
+        type: str | None = Field("default", description="Type of input: 'default' or 'password'.")
+        help: str | None = Field(None, description="Tooltip displayed next to the input.")
+        autocomplete: str | None = Field(
+            None, description="Autocomplete attribute for the input element."
+        )
+        placeholder: str | None = Field(
+            None, description="Placeholder text displayed when input is empty."
+        )
+        label_visibility: str | None = Field(
+            "visible", description="Visibility of the label: 'visible', 'hidden', or 'collapsed'."
+        )
+
+    args_schema: type[BaseModel] = TextInputSchema
+    name: str = "TextInput"
+    description: str = "Tool for displaying a single-line text input widget."
+    block_chat_input: bool = True
+
+    def _run(self, **kwargs: dict) -> None:
+        self.widget_config.update(kwargs)
 
     def render(self) -> None:
         """Render the text input widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            self.value = st.text_input(
-                label="",
-                value=self.value or "",
-                key=self.key,
-                disabled=self.disabled,
-            )
+            self.value = st.text_input(disabled=self.disabled, **self.widget_config)
 
 
 @register_message
-class SelectboxMessage(InputWidgetMessage):
+class Selectbox(InputWidget):
     """Assistant message with a selectbox widget."""
 
     def render(self) -> None:
         """Render the selectbox widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            options = self.widget_config["options"]
-            current_value = self.value if self.value in options else options[0]
-            self.value = st.selectbox(
-                label="",
-                options=options,
-                index=options.index(current_value),
-                key=self.key,
-                disabled=self.disabled,
-            )
+            self.value = st.selectbox(disabled=self.disabled, **self.widget_config)
 
 
 @register_message
-class SliderMessage(InputWidgetMessage):
+class Slider(InputWidget):
     """Assistant message with a slider widget."""
 
     def render(self) -> None:
         """Render the slider widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            default_value = self.widget_config.get("default", self.widget_config["min_value"])
             self.value = st.slider(
-                label="",
-                min_value=self.widget_config["min_value"],
-                max_value=self.widget_config["max_value"],
-                value=self.value if self.value is not None else default_value,
-                key=self.key,
                 disabled=self.disabled,
+                **self.widget_config,
             )
 
 
 @register_message
-class CheckboxMessage(InputWidgetMessage):
+class Checkbox(InputWidget):
     """Assistant message with a checkbox widget."""
 
     def render(self) -> None:
         """Render the checkbox widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            self.value = st.checkbox(
-                label="",
-                value=self.value if self.value is not None else False,
-                key=self.key,
-                disabled=self.disabled,
-            )
+            self.value = st.checkbox(disabled=self.disabled, **self.widget_config)
 
 
 @register_message
-class DateInputMessage(InputWidgetMessage):
+class DateInput(InputWidget):
     """Assistant message with a date input widget."""
 
     def render(self) -> None:
         """Render the date input widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            self.value = st.date_input(
-                label="",
-                value=self.value or None,
-                key=self.key,
-                disabled=self.disabled,
-            )
+            self.value = st.date_input(disabled=self.disabled, **self.widget_config)
 
 
 @register_message
-class TimeInputMessage(InputWidgetMessage):
+class TimeInput(InputWidget):
     """Assistant message with a time input widget."""
 
     def render(self) -> None:
         """Render the time input widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            self.value = st.time_input(
-                label="",
-                value=self.value or None,
-                key=self.key,
-                disabled=self.disabled,
-            )
+            self.value = st.time_input(disabled=self.disabled, **self.widget_config)
 
 
 @register_message
-class NumberInputMessage(InputWidgetMessage):
+class NumberInput(InputWidget):
     """Assistant message with a number input widget."""
 
     def render(self) -> None:
         """Render the number input widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            default_value = self.widget_config.get("default", self.widget_config["min_value"])
-            self.value = st.number_input(
-                label="",
-                min_value=self.widget_config["min_value"],
-                max_value=self.widget_config["max_value"],
-                value=self.value if self.value is not None else default_value,
-                key=self.key,
-                disabled=self.disabled,
-            )
+            self.value = st.number_input(disabled=self.disabled, **self.widget_config)
 
 
 @register_message
-class TextAreaMessage(InputWidgetMessage):
+class TextArea(InputWidget):
     """Assistant message with a text area widget."""
 
-    def __init__(self, widget_config: dict[str, Any], key: str):
-        """Initialise and set block_chat_input to True."""
-        super().__init__(widget_config, key)
-        self.block_chat_input = True
+    block_chat_input: bool = True
 
     def render(self) -> None:
         """Render the text area widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            self.value = st.text_area(
-                label="",
-                value=self.value or "",
-                key=self.key,
-                disabled=self.disabled,
-            )
+            self.value = st.text_area(disabled=self.disabled, **self.widget_config)
 
 
-class OutputWidgetMessage(Message):
+class OutputWidget(Message):
     """Base class for assistant messages with output widgets."""
 
-    def __init__(self, widget_data: Any):
-        """Initialize the output widget message."""
-        super().__init__(ASSISTANT_LABEL)
-        self.widget_data = widget_data
+    widget_data: Any
 
     @abstractmethod
     def render(self) -> None:
@@ -245,7 +200,7 @@ class OutputWidgetMessage(Message):
 
 
 @register_message
-class LineChartMessage(OutputWidgetMessage):
+class LineChart(OutputWidget):
     """Assistant message that displays a line chart."""
 
     def render(self) -> None:
@@ -257,7 +212,7 @@ class LineChartMessage(OutputWidgetMessage):
 
 
 @register_message
-class BarChartMessage(OutputWidgetMessage):
+class BarChart(OutputWidget):
     """Assistant message that displays a bar chart."""
 
     def render(self) -> None:
@@ -269,7 +224,7 @@ class BarChartMessage(OutputWidgetMessage):
 
 
 @register_message
-class ImageMessage(OutputWidgetMessage):
+class Image(OutputWidget):
     """Assistant message that displays an image."""
 
     def render(self) -> None:
@@ -283,7 +238,7 @@ class ImageMessage(OutputWidgetMessage):
 
 
 @register_message
-class TableMessage(OutputWidgetMessage):
+class Table(OutputWidget):
     """Assistant message that displays a table."""
 
     def render(self) -> None:
@@ -295,7 +250,7 @@ class TableMessage(OutputWidgetMessage):
 
 
 @register_message
-class MarkdownMessage(OutputWidgetMessage):
+class Markdown(OutputWidget):
     """Assistant message that displays markdown content."""
 
     def render(self) -> None:
