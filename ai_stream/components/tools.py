@@ -3,15 +3,18 @@
 from collections.abc import Callable
 from langchain_core.tools import BaseTool
 from langchain_core.utils.function_calling import convert_to_openai_function
+from pydantic import BaseModel
+
+
+TOOLS = {}
 
 
 class Tool(BaseTool):
     """An abstract class for tools used in AI Stream."""
 
-    pass
-
-
-TOOLS = {}
+    args_schema: type[BaseModel] | None = None
+    name: str = ""
+    description: str = ""
 
 
 def register_tool(cls: type[Tool]) -> Callable:
