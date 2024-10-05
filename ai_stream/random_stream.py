@@ -5,48 +5,42 @@ from ai_stream import TESTING
 from ai_stream.components.messages import InputWidgetMessage
 from ai_stream.components.messages import UserMessage
 from ai_stream.components.random_assistant import generate_random_response
+from ai_stream.utils.app_state import AppState
+from ai_stream.utils.app_state import ensure_app_state
 
 
-def initialize_session_state():
-    """Initialise session state."""
-    if "history" not in st.session_state:
-        st.session_state.history = []
-        st.session_state.widget_counter = 0
-
-
-def render_history():
+def render_history(history: list):
     """Display chat history."""
-    for i, entry in enumerate(st.session_state.history):
-        if hasattr(entry, "disable") and i != len(st.session_state.history) - 1:
+    for i, entry in enumerate(history):
+        if hasattr(entry, "disable") and i != len(history) - 1:
             entry.disable()
         entry.render()
 
 
-def check_block_chat_input():
+def check_block_chat_input(history: list):
     """Check waiting for input."""
-    for entry in st.session_state.history:
+    if history:
+        entry = history[-1]
         if isinstance(entry, InputWidgetMessage) and not entry.disabled and not entry.value:
             return True
     return False
 
 
-def main():
+@ensure_app_state
+def main(app_state: AppState):
     """App layout."""
-    initialize_session_state()
-    render_history()
-    disable_input = check_block_chat_input()
+    render_history(app_state.history)
+    disable_input = check_block_chat_input(app_state.history)
     user_message_text = st.chat_input(
         placeholder="Please type input above" if disable_input else "Type your message",
         disabled=disable_input,
     )
     if user_message_text:
         user_message = UserMessage(user_message_text)
-        st.session_state.history.append(user_message)
+        app_state.history.append(user_message)
 
-        assistant_response, st.session_state.widget_counter = generate_random_response(
-            user_message_text, st.session_state.widget_counter
-        )
-        st.session_state.history.append(assistant_response)
+        assistant_response = generate_random_response(user_message_text, len(app_state.history))
+        app_state.history.append(assistant_response)
 
         st.rerun()
 

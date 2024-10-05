@@ -20,7 +20,7 @@ class AppState:
         """Initialise all session states used in this app."""
         super().__init__(*args, **kwargs)
         # Predefined states
-        self.chat_history: list = []
+        self.history: list = []
         """Chat history when talking to chatbot."""
         self.openai_thread_id: str = ""
         """OpenAI Thread ID."""
