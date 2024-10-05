@@ -42,7 +42,7 @@ class WelcomePage(AppPage):
     """Welcome page."""
 
     group: str = ""
-    page: StreamlitPage = st.Page("welcome.py", title="AI Stream", icon="👋")
+    page: StreamlitPage = st.Page("welcome.py", title="Welcome", icon="👋")
     weight: float = 0
     page_defaults: PageDefaults = PageDefaults()
 
