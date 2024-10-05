@@ -70,7 +70,12 @@ class InputWidgetMessage(Message):
         self.widget_config = widget_config
         self.key = key
         self.value: Any = None
-        self.user_input_provided: bool = False
+        self.disabled: bool = False
+        self.block_chat_input: bool = False
+
+    def disable(self) -> None:
+        """Disable input."""
+        self.disabled = True
 
     @abstractmethod
     def render(self) -> None:
@@ -82,18 +87,21 @@ class InputWidgetMessage(Message):
 class TextInputMessage(InputWidgetMessage):
     """Assistant message with a text input widget."""
 
+    def __init__(self, widget_config: dict[str, Any], key: str):
+        """Initialise and set block_chat_input to True."""
+        super().__init__(widget_config, key)
+        self.block_chat_input = True
+
     def render(self) -> None:
         """Render the text input widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-            disabled = self.user_input_provided
             self.value = st.text_input(
                 label="",
                 value=self.value or "",
                 key=self.key,
-                disabled=disabled,
+                disabled=self.disabled,
             )
-            self.user_input_provided = bool(self.value)
 
 
 @register_message
@@ -104,7 +112,6 @@ class SelectboxMessage(InputWidgetMessage):
         """Render the selectbox widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-            disabled = self.user_input_provided
             options = self.widget_config["options"]
             current_value = self.value if self.value in options else options[0]
             self.value = st.selectbox(
@@ -112,9 +119,8 @@ class SelectboxMessage(InputWidgetMessage):
                 options=options,
                 index=options.index(current_value),
                 key=self.key,
-                disabled=disabled,
+                disabled=self.disabled,
             )
-            self.user_input_provided = True
 
 
 @register_message
@@ -125,7 +131,6 @@ class SliderMessage(InputWidgetMessage):
         """Render the slider widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-            disabled = self.user_input_provided
             default_value = self.widget_config.get("default", self.widget_config["min_value"])
             self.value = st.slider(
                 label="",
@@ -133,9 +138,8 @@ class SliderMessage(InputWidgetMessage):
                 max_value=self.widget_config["max_value"],
                 value=self.value if self.value is not None else default_value,
                 key=self.key,
-                disabled=disabled,
+                disabled=self.disabled,
             )
-            self.user_input_provided = True
 
 
 @register_message
@@ -146,14 +150,12 @@ class CheckboxMessage(InputWidgetMessage):
         """Render the checkbox widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-            disabled = self.user_input_provided
             self.value = st.checkbox(
                 label="",
                 value=self.value if self.value is not None else False,
                 key=self.key,
-                disabled=disabled,
+                disabled=self.disabled,
             )
-            self.user_input_provided = True
 
 
 @register_message
@@ -164,14 +166,12 @@ class DateInputMessage(InputWidgetMessage):
         """Render the date input widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-            disabled = self.user_input_provided
             self.value = st.date_input(
                 label="",
                 value=self.value or None,
                 key=self.key,
-                disabled=disabled,
+                disabled=self.disabled,
             )
-            self.user_input_provided = self.value is not None
 
 
 @register_message
@@ -182,14 +182,12 @@ class TimeInputMessage(InputWidgetMessage):
         """Render the time input widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-            disabled = self.user_input_provided
             self.value = st.time_input(
                 label="",
                 value=self.value or None,
                 key=self.key,
-                disabled=disabled,
+                disabled=self.disabled,
             )
-            self.user_input_provided = self.value is not None
 
 
 @register_message
@@ -200,7 +198,6 @@ class NumberInputMessage(InputWidgetMessage):
         """Render the number input widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-            disabled = self.user_input_provided
             default_value = self.widget_config.get("default", self.widget_config["min_value"])
             self.value = st.number_input(
                 label="",
@@ -208,27 +205,29 @@ class NumberInputMessage(InputWidgetMessage):
                 max_value=self.widget_config["max_value"],
                 value=self.value if self.value is not None else default_value,
                 key=self.key,
-                disabled=disabled,
+                disabled=self.disabled,
             )
-            self.user_input_provided = True
 
 
 @register_message
 class TextAreaMessage(InputWidgetMessage):
     """Assistant message with a text area widget."""
 
+    def __init__(self, widget_config: dict[str, Any], key: str):
+        """Initialise and set block_chat_input to True."""
+        super().__init__(widget_config, key)
+        self.block_chat_input = True
+
     def render(self) -> None:
         """Render the text area widget."""
         with st.chat_message(ASSISTANT_LABEL):
             st.write(self.widget_config.get("label", ""))
-            disabled = self.user_input_provided
             self.value = st.text_area(
                 label="",
                 value=self.value or "",
                 key=self.key,
-                disabled=disabled,
+                disabled=self.disabled,
             )
-            self.user_input_provided = bool(self.value)
 
 
 class OutputWidgetMessage(Message):
