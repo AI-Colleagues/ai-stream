@@ -87,7 +87,10 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
         possible_widgets = [
             {
                 "widget_type": "TextInput",
-                "widget_config": {"label": "Assistant asks: Please provide your name:"},
+                "widget_config": {
+                    "label": "Assistant asks: Please provide your name:",
+                    "key": widget_key,
+                },
             },
             {
                 "widget_type": "Selectbox",

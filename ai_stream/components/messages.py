@@ -96,7 +96,6 @@ class TextInput(InputWidget):
         placeholder: str | None = Field(
             None, description="Placeholder text displayed when input is empty."
         )
-        disabled: bool | None = Field(False, description="Whether the input is disabled.")
         label_visibility: str | None = Field(
             "visible", description="Visibility of the label: 'visible', 'hidden', or 'collapsed'."
         )
@@ -104,19 +103,12 @@ class TextInput(InputWidget):
     args_schema: type[BaseModel] = TextInputSchema
     name: str = "TextInput"
     description: str = "Tool for displaying a single-line text input widget."
-
     block_chat_input: bool = True
 
     def render(self) -> None:
         """Render the text input widget."""
         with st.chat_message(ASSISTANT_LABEL):
-            st.write(self.widget_config.get("label", ""))
-            self.value = st.text_input(
-                label="",
-                value=self.value or "",
-                key=self.key,
-                disabled=self.disabled,
-            )
+            self.value = st.text_input(disabled=self.disabled, **self.widget_config)
 
 
 @register_message
