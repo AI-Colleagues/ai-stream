@@ -37,17 +37,17 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
 
     elif response_type == "output_widget":
         possible_output_widgets = [
-            {"widget_type": "LineChartMessage", "widget_data": np.random.randn(20, 3).tolist()},
-            {"widget_type": "BarChartMessage", "widget_data": np.random.randn(20, 3).tolist()},
+            {"widget_type": "LineChart", "widget_data": np.random.randn(20, 3).tolist()},
+            {"widget_type": "BarChart", "widget_data": np.random.randn(20, 3).tolist()},
             {
-                "widget_type": "ImageMessage",
+                "widget_type": "Image",
                 "widget_data": {
                     "url": "https://via.placeholder.com/150",
                     "caption": "A placeholder image",
                 },
             },
             {
-                "widget_type": "TableMessage",
+                "widget_type": "Table",
                 "widget_data": {
                     "Column 1": ["A", "B", "C"],
                     "Column 2": [1, 2, 3],
@@ -55,7 +55,7 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
                 },
             },
             {
-                "widget_type": "MarkdownMessage",
+                "widget_type": "Markdown",
                 "widget_data": {
                     "content": (
                         "### This is a Markdown header\n\nHere is some **bold** "
@@ -84,18 +84,18 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
 
         possible_widgets = [
             {
-                "widget_type": "TextInputMessage",
+                "widget_type": "TextInput",
                 "widget_config": {"label": "Assistant asks: Please provide your name:"},
             },
             {
-                "widget_type": "SelectboxMessage",
+                "widget_type": "Selectbox",
                 "widget_config": {
                     "label": "Assistant asks: Choose your favorite color:",
                     "options": ["Red", "Green", "Blue", "Yellow", "Purple", "Orange"],
                 },
             },
             {
-                "widget_type": "SliderMessage",
+                "widget_type": "Slider",
                 "widget_config": {
                     "label": "Assistant asks: Rate your experience from 1 to 10:",
                     "min_value": 1,
@@ -104,19 +104,19 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
                 },
             },
             {
-                "widget_type": "CheckboxMessage",
+                "widget_type": "Checkbox",
                 "widget_config": {"label": "Assistant asks: Do you agree with the terms?"},
             },
             {
-                "widget_type": "DateInputMessage",
+                "widget_type": "DateInput",
                 "widget_config": {"label": "Assistant asks: Select your birth date:"},
             },
             {
-                "widget_type": "TimeInputMessage",
+                "widget_type": "TimeInput",
                 "widget_config": {"label": "Assistant asks: What time works best for you?"},
             },
             {
-                "widget_type": "NumberInputMessage",
+                "widget_type": "NumberInput",
                 "widget_config": {
                     "label": "Assistant asks: Enter a number:",
                     "min_value": 0,
@@ -125,7 +125,7 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
                 },
             },
             {
-                "widget_type": "TextAreaMessage",
+                "widget_type": "TextArea",
                 "widget_config": {
                     "label": "Assistant asks: Please describe your issue in detail:"
                 },

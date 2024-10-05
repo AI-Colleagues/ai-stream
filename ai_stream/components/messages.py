@@ -9,7 +9,6 @@ from pydantic import BaseModel
 from pydantic import Field
 from ai_stream import ASSISTANT_LABEL
 from ai_stream import USER_LABEL
-from ai_stream.components.tools import Tool
 from ai_stream.components.tools import register_tool
 
 
@@ -65,18 +64,17 @@ class AssistantMessage(Message):
             st.write(self.content)
 
 
-class InputWidget(Message, Tool):
+class InputWidget(Message):
     """Base class for assistant messages with input widgets."""
 
     def __init__(self, widget_config: dict[str, Any], key: str, **kwargs: dict):
         """Initialize the input widget message."""
-        super(Message).__init__(ASSISTANT_LABEL)
+        super().__init__(ASSISTANT_LABEL)
         self.widget_config = widget_config
         self.key = key
         self.value: Any = None
         self.disabled: bool = False
         self.block_chat_input: bool = False
-        super(Tool).__init__(**kwargs)
 
     def disable(self) -> None:
         """Disable input."""
@@ -117,9 +115,9 @@ class TextInput(InputWidget):
     name: str = "TextInput"
     description: str = "Tool for displaying a single-line text input widget."
 
-    def __init__(self, **kwargs: dict):
+    def __init__(self, widget_config: dict[str, Any], key: str):
         """Initialise and set block_chat_input to True."""
-        super().__init__(**kwargs)
+        super().__init__(widget_config, key)
         self.block_chat_input = True
 
     def _run(self) -> None:
