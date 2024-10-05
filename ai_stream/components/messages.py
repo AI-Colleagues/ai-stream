@@ -5,6 +5,8 @@ from abc import abstractmethod
 from typing import Any
 import pandas as pd
 import streamlit as st
+from pydantic import BaseModel
+from pydantic import Field
 from ai_stream import ASSISTANT_LABEL
 from ai_stream import USER_LABEL
 from ai_stream.components.tools import Tool
@@ -90,6 +92,30 @@ class InputWidget(Message, Tool):
 @register_tool
 class TextInput(InputWidget):
     """Assistant message with a text input widget."""
+
+    class TextInputSchema(BaseModel):
+        """Schema for TextInput."""
+
+        label: str = Field(..., description="A short label explaining the input.")
+        value: str | None = Field("", description="The initial text value of the input.")
+        max_chars: int | None = Field(None, description="Maximum number of characters allowed.")
+        key: str | int | None = Field(None, description="Unique key for the widget.")
+        type: str | None = Field("default", description="Type of input: 'default' or 'password'.")
+        help: str | None = Field(None, description="Tooltip displayed next to the input.")
+        autocomplete: str | None = Field(
+            None, description="Autocomplete attribute for the input element."
+        )
+        placeholder: str | None = Field(
+            None, description="Placeholder text displayed when input is empty."
+        )
+        disabled: bool | None = Field(False, description="Whether the input is disabled.")
+        label_visibility: str | None = Field(
+            "visible", description="Visibility of the label: 'visible', 'hidden', or 'collapsed'."
+        )
+
+    args_schema: type[BaseModel] = TextInputSchema
+    name: str = "TextInput"
+    description: str = "Tool for displaying a single-line text input widget."
 
     def __init__(self, **kwargs: dict):
         """Initialise and set block_chat_input to True."""
