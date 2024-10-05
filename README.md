@@ -4,6 +4,8 @@ An AI app built with OpenAI and Streamlit. The necessary Streamlit widgets will 
 
 ## Showcase
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ai-stream.streamlit.app/)
+
 https://github.com/user-attachments/assets/96db4e0d-2792-4ca1-8065-ab8c80730d18
 
 ## Set up
