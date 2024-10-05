@@ -23,15 +23,6 @@ def register_tool(cls: type[Tool]) -> Callable:
     return cls
 
 
-def instantiate_tools() -> list[Tool]:
-    """Instantiate all the registered tools."""
-    tools = []
-    for tool_cls in TOOLS.values():
-        tools.append(tool_cls())  # type: ignore
-
-    return tools
-
-
 def tools_to_openai_functions() -> list[dict]:
     """Convert to OpenAI functions."""
     tools = []
