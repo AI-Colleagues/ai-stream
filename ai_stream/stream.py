@@ -65,7 +65,7 @@ class UIAssistantEventHandler(AssistantEventHandler):
 
     @override
     def on_text_done(self, text: Text) -> None:
-        self.app_state.chat_history.append((ASSISTANT_LABEL, {}, text.value))
+        self.app_state.history.append((ASSISTANT_LABEL, {}, text.value))
 
     @override
     def on_tool_call_created(self, tool_call: ToolCall) -> None:
@@ -111,7 +111,7 @@ class UIAssistantEventHandler(AssistantEventHandler):
 
         # Submit all tool_outputs at the same time
         response = self.submit_tool_outputs(tool_outputs, run_id)
-        self.app_state.chat_history.append((ASSISTANT_LABEL, {tool_name: kwargs}, response))
+        self.app_state.history.append((ASSISTANT_LABEL, {tool_name: kwargs}, response))
 
     def submit_tool_outputs(self, tool_outputs: list, run_id: str) -> str:
         """Use the submit_tool_outputs_stream helper."""
@@ -177,7 +177,7 @@ def get_response(
 
 def display_history(app_state: AppState) -> None:
     """Display all history messages."""
-    history = app_state.chat_history
+    history = app_state.history
     app_state.recent_tool_output.clear()  # Clear previous tool_output
     for i, message in enumerate(history):
         if message[0] == ASSISTANT_LABEL:
@@ -205,7 +205,7 @@ def main(app_state: AppState) -> None:
 
     user_input = st.chat_input("Your message")
     if user_input:
-        app_state.chat_history.append((USER_LABEL, user_input))
+        app_state.history.append((USER_LABEL, user_input))
         st.chat_message(USER_LABEL).write(user_input)
         app_state.openai_client.beta.threads.messages.create(
             app_state.openai_thread_id,

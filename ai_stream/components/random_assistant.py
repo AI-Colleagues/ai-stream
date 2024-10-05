@@ -7,15 +7,15 @@ from ai_stream.components.messages import AssistantMessage
 from ai_stream.components.messages import message_registry
 
 
-def generate_random_response(user_message: str, widget_counter: int) -> tuple[Any, int]:
+def generate_random_response(user_message: str, message_counter: int) -> Any:
     """Generate a random assistant response based on the user message.
 
     Args:
         user_message: The message provided by the user.
-        widget_counter: A counter to keep track of widgets.
+        message_counter: Used for distinguishing widget keys.
 
     Returns:
-        A tuple containing the assistant's message and the updated widget counter.
+        The assistant's message.
     """
     response_type = random.choice(["input_widget", "output", "output_widget"])
 
@@ -33,7 +33,7 @@ def generate_random_response(user_message: str, widget_counter: int) -> tuple[An
             "How does that make you feel?",
         ]
         assistant_message = random.choice(possible_messages)
-        return AssistantMessage(assistant_message), widget_counter
+        return AssistantMessage(assistant_message)
 
     elif response_type == "output_widget":
         possible_output_widgets = [
@@ -73,15 +73,14 @@ def generate_random_response(user_message: str, widget_counter: int) -> tuple[An
 
         if message_class:
             assistant_output_widget_message = message_class(widget_data)
-            return assistant_output_widget_message, widget_counter
+            return assistant_output_widget_message
         else:
             # Handle unknown widget type
             assistant_message = AssistantMessage("Sorry, I encountered an unknown widget type.")
-            return assistant_message, widget_counter
+            return assistant_message
 
     else:  # response_type == "input_widget"
-        widget_counter += 1
-        widget_key = f"widget_{widget_counter}"
+        widget_key = f"widget_{message_counter}"
 
         possible_widgets = [
             {
@@ -141,8 +140,8 @@ def generate_random_response(user_message: str, widget_counter: int) -> tuple[An
 
         if message_class:
             assistant_widget_message = message_class(widget_config, widget_key)
-            return assistant_widget_message, widget_counter
+            return assistant_widget_message
         else:
             # Handle unknown widget type
             assistant_message = AssistantMessage("Sorry, I encountered an unknown widget type.")
-            return assistant_message, widget_counter
+            return assistant_message
