@@ -104,6 +104,9 @@ class TextInput(InputWidget):
     description: str = "Tool for displaying a single-line text input widget."
     block_chat_input: bool = True
 
+    def _run(self, **kwargs: dict) -> None:
+        self.widget_config.update(kwargs)
+
     def render(self) -> None:
         """Render the text input widget."""
         with st.chat_message(ASSISTANT_LABEL):
