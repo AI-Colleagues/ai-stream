@@ -239,9 +239,11 @@ def main(app_state: AppState) -> None:
     st.subheader("Current Configuration")
     st.code(json.dumps(configuration, indent=4), language="json")
 
+    new_name = st.text_input("Assistant Name", value=assistant_name, key="asst_name")
     assert app_state.openai_client
-    if st.button("Save Assistant"):
+    if st.button("Save Assistant", disabled=not new_name):
         # Save to OpenAI
+        configuration["name"] = new_name
         assistant_id = save_assistant(app_state, assistant_id, configuration)
         # Save to app_state.assistants
         app_state.assistants[assistant_id] = configuration["name"]
