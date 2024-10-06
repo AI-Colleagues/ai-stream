@@ -38,6 +38,17 @@ class FunctionParameter:
         self.items_type_index = PARAM_TYPES.index(self.items_type)
 
 
+@dataclass
+class Function2Display:
+    """Function to display."""
+
+    schema_name: str
+    function_name: str
+    description: str
+    parameters: dict[str, FunctionParameter]
+    is_new: bool = False
+
+
 def convert_openai_function_to_aistream_dict(schema_name: str, schema: str | dict) -> dict:
     """Convert a JSON Schema into an AI Stream function dictionary."""
     if isinstance(schema, str):
