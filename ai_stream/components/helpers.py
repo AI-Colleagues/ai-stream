@@ -15,9 +15,12 @@ from ai_stream.components.messages import AssistantMessage
 from ai_stream.components.messages import InputWidget
 from ai_stream.components.messages import UserMessage
 from ai_stream.components.tools import TOOLS
-from ai_stream.stream import PROCESSING_REFRESH
-from ai_stream.stream import logger
+from ai_stream.config import get_logger
 from ai_stream.utils.app_state import AppState
+
+
+PROCESSING_REFRESH = "`Processing...`"
+logger = get_logger(__name__)
 
 
 class StreamAssistantEventHandler(AssistantEventHandler):

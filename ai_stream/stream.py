@@ -1,6 +1,5 @@
 """Main app for AI Stream."""
 
-import logging
 import streamlit as st
 from ai_stream import ASSISTANT_LABEL
 from ai_stream import TESTING
@@ -8,6 +7,7 @@ from ai_stream.components.helpers import StreamAssistantEventHandler
 from ai_stream.components.helpers import render_history
 from ai_stream.components.helpers import select_assistant
 from ai_stream.components.messages import UserMessage
+from ai_stream.config import get_logger
 from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
 
@@ -15,10 +15,8 @@ from ai_stream.utils.app_state import ensure_app_state
 TITLE = "AI Stream"
 MODEL_NAME = "gpt-4o-mini"
 PROCESSING_START = "`Processing`"
-PROCESSING_REFRESH = "`Processing...`"
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger = get_logger(__name__)
 
 
 def get_response(
