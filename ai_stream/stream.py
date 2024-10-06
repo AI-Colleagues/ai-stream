@@ -14,7 +14,9 @@ from openai.types.beta.threads.runs import ToolCallDelta
 from streamlit.delta_generator import DeltaGenerator
 from ai_stream import ASSISTANT_LABEL
 from ai_stream import TESTING
-from ai_stream import USER_LABEL
+from ai_stream.components.messages import AssistantMessage
+from ai_stream.components.messages import UserMessage
+from ai_stream.components.misc import render_history
 from ai_stream.components.misc import select_assistant
 from ai_stream.components.tools import TOOLS
 from ai_stream.utils.app_state import AppState
@@ -59,7 +61,7 @@ class UIAssistantEventHandler(AssistantEventHandler):
 
     @override
     def on_text_done(self, text: Text) -> None:
-        self.app_state.history.append((ASSISTANT_LABEL, {}, text.value))
+        self.app_state.history.append(AssistantMessage(content=text.value))
 
     @override
     def on_tool_call_created(self, tool_call: ToolCall) -> None:
@@ -155,25 +157,6 @@ def get_response(
     st.rerun()
 
 
-def display_history(app_state: AppState) -> None:
-    """Display all history messages."""
-    history = app_state.history
-    app_state.recent_tool_output.clear()  # Clear previous tool_output
-    for i, message in enumerate(history):
-        if message[0] == ASSISTANT_LABEL:
-            tool_call = message[1]
-            response = message[2]
-            with st.chat_message(ASSISTANT_LABEL):
-                if tool_call:
-                    for tool_name, tool_input in tool_call.items():
-                        tool_output = TOOLS[tool_name].render(**tool_input)
-                        if tool_output and i == len(history) - 1:
-                            app_state.recent_tool_output.update(tool_output)
-                st.write(response)
-        else:
-            st.chat_message(message[0]).write(message[1])
-
-
 @ensure_app_state
 def main(app_state: AppState) -> None:
     """App layout."""
@@ -182,12 +165,13 @@ def main(app_state: AppState) -> None:
     if not app_state.openai_thread_id:  # One thread per session
         thread = app_state.openai_client.beta.threads.create()
         app_state.openai_thread_id = thread.id
-    display_history(app_state)
+    render_history(app_state.history)
 
     user_input = st.chat_input("Your message")
     if user_input:
-        app_state.history.append((USER_LABEL, user_input))
-        st.chat_message(USER_LABEL).write(user_input)
+        user_msg = UserMessage(content=user_input)
+        app_state.history.append(user_msg)
+        user_msg.render()  # Make sure user message displays once sent
         app_state.openai_client.beta.threads.messages.create(
             app_state.openai_thread_id,
             role="user",

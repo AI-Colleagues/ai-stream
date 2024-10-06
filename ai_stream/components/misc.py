@@ -27,3 +27,11 @@ def select_assistant(assistants: dict) -> tuple:
     st.sidebar.caption(f"ID: {assistant_id}")
 
     return assistant_id, assistants[assistant_id]
+
+
+def render_history(history: list):
+    """Display chat history."""
+    for i, entry in enumerate(history):
+        if hasattr(entry, "disable") and i != len(history) - 1:
+            entry.disable()
+        entry.render()
