@@ -16,46 +16,6 @@ from ai_stream.utils.function_tools import Function2Display
 from ai_stream.utils.function_tools import FunctionParameter
 
 
-def convert_openai_function_to_aistream_dict(schema_name: str, schema: str | dict) -> dict:
-    """TBD: Convert a JSON Schema into an AI Stream function dictionary."""
-    if isinstance(schema, str):
-        schema_dict = json.loads(schema)
-    else:
-        schema_dict = schema
-    # Extract the necessary fields
-    function_name = schema_dict.get("name")
-    function_description = schema_dict.get("description")
-    parameters = schema_dict.get("parameters")
-    required = parameters.get("required", [])
-    converted_params: dict[str, FunctionParameter] = {}
-    for param_name, param in parameters["properties"].items():
-        param_id = create_id()
-        fields = {
-            "name": param_name,
-            "description": param["description"],
-            "type": param["type"],
-            "required": param_name in required,
-            "enum": param.get("enum", []),  # For enum values
-            "items_type": param.get("items", {}).get("type", "string"),
-        }
-        converted_params[param_id] = FunctionParameter(**fields)
-
-    # Construct the function dictionary
-    function_dict = {
-        "schema_name": schema_name,
-        "name": function_name,
-        "description": function_description,
-        "parameters": converted_params,
-    }
-
-    return function_dict
-
-
-def new_function() -> dict:
-    """TBD: Create and return a new function."""
-    return {"name": "", "schema_name": "NewFunction", "description": "", "parameters": {}}
-
-
 def add_function(app_state: AppState) -> None:
     """Add a new function."""
     new_func = Function2Display.new()
