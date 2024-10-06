@@ -29,6 +29,7 @@ def register_tool(cls: type[Tool]) -> Callable:
     TOOLS[tool_name] = cls
     schema_cls = getattr(cls, f"{tool_name}Schema")
     schema = convert_to_openai_function(schema_cls)
+    schema["name"] = schema["name"].replace("Schema", "")
     try:
         item = FunctionsTable.get(tool_name)  # A preserved tool uses its name as ID
         if schema != item.value.as_dict():

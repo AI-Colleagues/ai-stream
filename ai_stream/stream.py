@@ -17,6 +17,7 @@ from ai_stream import TESTING
 from ai_stream.components.helpers import render_history
 from ai_stream.components.helpers import select_assistant
 from ai_stream.components.messages import AssistantMessage
+from ai_stream.components.messages import InputWidget
 from ai_stream.components.messages import UserMessage
 from ai_stream.components.tools import TOOLS
 from ai_stream.utils.app_state import AppState
@@ -32,8 +33,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class UIAssistantEventHandler(AssistantEventHandler):
-    """Event handler for UI Assistant."""
+class StreamAssistantEventHandler(AssistantEventHandler):
+    """Event handler for Stream Assistant."""
 
     def __init__(
         self,
@@ -56,6 +57,7 @@ class UIAssistantEventHandler(AssistantEventHandler):
 
     @override
     def on_text_delta(self, delta: TextDelta, snapshot: Text) -> None:
+        # TODO: Use streaming with AssistantMessage
         with self.st_placeholder:
             st.write(snapshot.value)
 
@@ -98,16 +100,20 @@ class UIAssistantEventHandler(AssistantEventHandler):
         assert data.required_action
         for tool in data.required_action.submit_tool_outputs.tool_calls:
             kwargs = json.loads(tool.function.arguments)
-            tool_name = tool.function.name.replace("Schema", "")
+            tool_name = tool.function.name
             logger.info(f"Running tool {tool_name}.")
             # TODO: Displaying here is redundant
-            TOOLS[tool_name].render(**kwargs)
+            tool_message = TOOLS[tool_name]()
+            if issubclass(TOOLS[tool_name], InputWidget):
+                kwargs["key"] = f"{tool_name}_{len(self.app_state.history)}"
+            tool_message._run(**kwargs)
+            self.app_state.history.append(tool_message)
 
-            tool_outputs.append({"tool_call_id": tool.id, "output": "Widget displayed to user."})
+            tool_outputs.append({"tool_call_id": tool.id, "output": f"Displayed a {tool_name}."})
 
         # Submit all tool_outputs at the same time
-        response = self.submit_tool_outputs(tool_outputs, run_id)
-        self.app_state.history.append((ASSISTANT_LABEL, {tool_name: kwargs}, response))
+        final_response = self.submit_tool_outputs(tool_outputs, run_id)
+        self.app_state.history.append(AssistantMessage(content=final_response))
 
     def submit_tool_outputs(self, tool_outputs: list, run_id: str) -> str:
         """Use the submit_tool_outputs_stream helper."""
@@ -116,7 +122,6 @@ class UIAssistantEventHandler(AssistantEventHandler):
             thread_id=self.current_run.thread_id,
             run_id=self.current_run.id,
             tool_outputs=tool_outputs,
-            # event_handler=UIAssistantEventHandler(),
         ) as stream:
             res = ""
             with st.empty():
@@ -150,7 +155,9 @@ def get_response(
     with app_state.openai_client.beta.threads.runs.stream(
         thread_id=app_state.openai_thread_id,
         assistant_id=assistant_id,
-        event_handler=UIAssistantEventHandler(app_state=app_state, st_placeholder=st_placeholder),
+        event_handler=StreamAssistantEventHandler(
+            app_state=app_state, st_placeholder=st_placeholder
+        ),
     ) as stream:
         stream.until_done()
 
