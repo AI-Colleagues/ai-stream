@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from dataclasses import field
 import streamlit as st
 from code_editor import code_editor
+from langchain_core.utils.function_calling import convert_to_openai_function
 from pynamodb.exceptions import DoesNotExist
 from ai_stream import TESTING
 from ai_stream.components.tools import TOOLS
@@ -258,8 +259,8 @@ def display_function(config_name: str, selected_function: dict, function_id: str
         index=index,
         key=f"function_name_{function_id}",
     )
-    schema = getattr(TOOLS[new_name], f"{new_name}Schema").schema()
-    schema["parameters"] = {"properties": schema["properties"]}
+    schema_cls = getattr(TOOLS[new_name], f"{new_name}Schema")
+    schema = convert_to_openai_function(schema_cls)
     if not selected_function["parameters"]:
         selected_function.update(load_from_json_schema(config_name, schema))
     new_description = st.text_area(
