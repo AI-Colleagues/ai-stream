@@ -60,15 +60,11 @@ def retrieve_assistant(app_state: AppState, assistant_id: str) -> dict:
         "model": asst.model,
         "temperature": asst.temperature,
         "top_p": asst.top_p,
-        "file_search_enabled": any(
-            isinstance(tool, FileSearchTool) for tool in asst.tools
-        ),
+        "file_search_enabled": any(isinstance(tool, FileSearchTool) for tool in asst.tools),
         "code_interpreter_enabled": any(
             isinstance(tool, CodeInterpreterTool) for tool in asst.tools
         ),
-        "custom_function_enabled": any(
-            isinstance(tool, FunctionTool) for tool in asst.tools
-        ),
+        "custom_function_enabled": any(isinstance(tool, FunctionTool) for tool in asst.tools),
         "function_ids": function_ids,
         "response_format": response_format,
         "json_schema": None,  # TODO
@@ -78,7 +74,7 @@ def retrieve_assistant(app_state: AppState, assistant_id: str) -> dict:
 def setup_configuration_widgets(
     app_state: AppState, assistant_id: str, assistant_name: str
 ) -> dict[str, Any]:
-    """Configuration widgets in the sidebar for configuring OpenAI Assistants."""
+    """Widgets in the sidebar for configuring OpenAI Assistants."""
     if app_state.current_assistant.get("id", "") != assistant_id:
         if assistant_id.startswith("asst_"):
             app_state.current_assistant = retrieve_assistant(app_state, assistant_id)
@@ -88,16 +84,14 @@ def setup_configuration_widgets(
     selected_assistant = app_state.current_assistant
     metadata = {}
     # Assistant name
-    new_name: str = st.sidebar.text_input(
-        "Assistant Name", value=selected_assistant["name"]
-    )
+    new_name: str = st.sidebar.text_input("Assistant Name", value=selected_assistant["name"])
 
     # System instructions
     prompts = app_state.prompts
     prompt_id: str = st.sidebar.selectbox(
         "Select Prompt", options=prompts, format_func=lambda x: prompts[x]
     )
-    system_instructions = PromptsTable.get(prompt_id, prompts[prompt_id]).value
+    system_instructions = PromptsTable.get(prompt_id).value
     metadata["prompt_id"] = prompt_id
 
     # Model selection
@@ -147,12 +141,9 @@ def setup_configuration_widgets(
             format_func=lambda x: functions[x],
             default=selected_assistant["function_ids"],
         )
-        items = FunctionsTable.batch_get([(id, functions[id]) for id in function_ids])
+        items = FunctionsTable.batch_get([(id) for id in function_ids])
         tools.extend(
-            [
-                {"type": "function", "function": schema.value.as_dict()}
-                for schema in items
-            ]
+            [{"type": "function", "function": schema.value.as_dict()} for schema in items]
         )
         metadata.update({f"function_{i}": id for i, id in enumerate(function_ids)})
 
@@ -215,33 +206,27 @@ def add_assistant(app_state: AppState) -> None:
 def save_assistant(app_state: AppState, assistant_id: str, configuration: dict) -> str:
     """Save or update the given assistant."""
     if assistant_id.startswith("asst_"):  # Update
-        assistant = app_state.openai_client.beta.assistants.update(
-            assistant_id, **configuration
-        )
+        assistant = app_state.openai_client.beta.assistants.update(assistant_id, **configuration)
     else:
         assistant = app_state.openai_client.beta.assistants.create(**configuration)
     # Register to used prompt and functions
     metadata = configuration["metadata"]
     prompt_id = metadata["prompt_id"]
-    prompt_name = app_state.prompts[prompt_id]
-    item = PromptsTable.get(prompt_id, prompt_name)
+    item = PromptsTable.get(prompt_id)
     if assistant.id not in item.used_by:
         item.update(actions=[PromptsTable.used_by.set(item.used_by + [assistant.id])])
     for key, val in metadata.items():
         if not key.startswith("function_"):
             continue
-        function_name = app_state.functions[val]
-        item = FunctionsTable.get(val, function_name)
+        item = FunctionsTable.get(val)
         if assistant.id not in item.used_by:
-            item.update(
-                actions=[FunctionsTable.used_by.set(item.used_by + [assistant.id])]
-            )
+            item.update(actions=[FunctionsTable.used_by.set(item.used_by + [assistant.id])])
     return assistant.id
 
 
 @ensure_app_state
 def main(app_state: AppState) -> None:
-    """Main function to run the Streamlit app."""
+    """App layout."""
     st.title("OpenAI Assistant Configuration")
 
     if st.button("New Assistant"):
@@ -270,20 +255,14 @@ def main(app_state: AppState) -> None:
         # Deregister to used prompt and functions
         metadata = configuration["metadata"]
         prompt_id = metadata["prompt_id"]
-        prompt_name = app_state.prompts[prompt_id]
-        item = PromptsTable.get(prompt_id, prompt_name)
-        item.update(
-            actions=[PromptsTable.used_by.set(item.used_by.remove(assistant_id))]
-        )
+        item = PromptsTable.get(prompt_id)
+        item.update(actions=[PromptsTable.used_by.set(item.used_by.remove(assistant_id))])
 
         for key, val in metadata.items():
             if not key.startswith("function_"):
                 continue
-            function_name = app_state.functions[val]
-            item = FunctionsTable.get(val, function_name)
-            item.update(
-                actions=[FunctionsTable.used_by.set(item.used_by.remove(assistant_id))]
-            )
+            item = FunctionsTable.get(val)
+            item.update(actions=[FunctionsTable.used_by.set(item.used_by.remove(assistant_id))])
 
         app_state.openai_client.beta.assistants.delete(assistant_id)
         # Delete from app_state.assistants
