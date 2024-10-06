@@ -2,8 +2,6 @@
 
 import json
 from collections import OrderedDict
-from dataclasses import dataclass
-from dataclasses import field
 import streamlit as st
 from code_editor import code_editor
 from langchain_core.utils.function_calling import convert_to_openai_function
@@ -14,43 +12,12 @@ from ai_stream.db.aws import FunctionsTable
 from ai_stream.utils import create_id
 from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
-
-
-PARAM_TYPES = ["string", "number", "integer", "boolean", "array", "object"]
-
-
-@dataclass
-class FunctionParameter:
-    """Data class for a function parameter."""
-
-    name: str = ""
-    description: str = ""
-    type: str = "string"
-    required: bool = True
-    enum: list = field(default_factory=list)
-    items_type: str = "string"
-    type_index: int = 0
-    items_type_index: int = 0
-
-    def __post_init__(self) -> None:
-        """Initialise indexes of parameter type and item_type."""
-        self.type_index = PARAM_TYPES.index(self.type)
-        self.items_type_index = PARAM_TYPES.index(self.items_type)
-
-
-@dataclass
-class Function2Display:
-    """Function to display."""
-
-    schema_name: str
-    function_name: str
-    description: str
-    parameters: dict[str, FunctionParameter]
-    is_new: bool = False
+from ai_stream.utils.function_tools import PARAM_TYPES
+from ai_stream.utils.function_tools import FunctionParameter
 
 
 def convert_openai_function_to_aistream_dict(schema_name: str, schema: str | dict) -> dict:
-    """Convert a JSON Schema into an AI Stream function dictionary."""
+    """TBD: Convert a JSON Schema into an AI Stream function dictionary."""
     if isinstance(schema, str):
         schema_dict = json.loads(schema)
     else:
