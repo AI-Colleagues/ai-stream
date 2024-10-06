@@ -86,7 +86,6 @@ class TextInput(InputWidget):
         label: str = Field(..., description="A short label explaining the input.")
         value: str | None = Field("", description="The initial text value of the input.")
         max_chars: int | None = Field(None, description="Maximum number of characters allowed.")
-        key: str | None = Field(None, description="Unique key for the widget.")
         type: str | None = Field("default", description="Type of input: 'default' or 'password'.")
         help: str | None = Field(None, description="Tooltip displayed next to the input.")
         autocomplete: str | None = Field(
@@ -188,6 +187,37 @@ class TextArea(InputWidget):
             self.value = st.text_area(disabled=self.disabled, **self.widget_config)
 
 
+@register_message
+@register_tool
+class FileUploader(InputWidget):
+    """Tool for displaying a Streamlit file_uploader."""
+
+    class FileUploaderSchema(BaseModel):
+        """Tool for displaying a Streamlit file_uploader."""
+
+        label: str = Field(..., description="A short label explaining the file uploader.")
+        type: list[str] | None = Field(None, description="Array of allowed file extensions.")
+        accept_multiple_files: bool = Field(
+            False, description="Whether multiple file uploads are allowed."
+        )
+        help: str | None = Field(None, description="Tooltip displayed next to the file uploader.")
+        label_visibility: str | None = Field(
+            "visible", description="Visibility of the label: 'visible', 'hidden', or 'collapsed'."
+        )
+
+    args_schema: type[BaseModel] = FileUploaderSchema
+    name: str = "FileUploader"
+    description: str = "Tool for displaying a Streamlit file_uploader."
+
+    def _run(self, **kwargs: dict) -> None:
+        self.widget_config.update(kwargs)
+
+    def render(self) -> None:
+        """Render the text input widget."""
+        with st.chat_message(ASSISTANT_LABEL):
+            self.value = st.file_uploader(disabled=self.disabled, **self.widget_config)
+
+
 class OutputWidget(Message):
     """Base class for assistant messages with output widgets."""
 
@@ -238,8 +268,23 @@ class Image(OutputWidget):
 
 
 @register_message
+@register_tool
 class Table(OutputWidget):
     """Assistant message that displays a table."""
+
+    class TableSchema(BaseModel):
+        """Tool for displaying a table."""
+
+        data: dict = Field(
+            ..., description="The data to display, can be dataframe-like or collection-like."
+        )
+
+    args_schema: type[BaseModel] = TableSchema
+    name: str = "Table"
+    description: str = "Tool for displaying a table."
+
+    def _run(self, **kwargs: dict) -> None:
+        self.widget_data.update(kwargs)
 
     def render(self) -> None:
         """Render the table."""

@@ -17,7 +17,7 @@ class FunctionParameter:
 
     name: str = ""
     description: str = ""
-    type: str = "string"
+    type: str = "string"  # TODO: Support multi-type annotation (anyOf)
     required: bool = True
     enum: list = field(default_factory=list)
     items_type: str = "string"
