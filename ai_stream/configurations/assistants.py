@@ -11,6 +11,7 @@ from openai.types.beta import CodeInterpreterTool
 from openai.types.beta import FileSearchTool
 from openai.types.beta import FunctionTool
 from ai_stream import TESTING
+from ai_stream.components.misc import select_assistant
 from ai_stream.config import load_config
 from ai_stream.db.aws import FunctionsTable
 from ai_stream.db.aws import PromptsTable
@@ -179,20 +180,6 @@ def setup_configuration_widgets(
         "metadata": metadata,
     }
     return configuration
-
-
-def select_assistant(assistants: dict) -> tuple:
-    """Select assistant and return its ID and name."""
-    if not assistants:
-        st.warning("No assistants yet. Click 'New Assistant' to create one.")
-        st.stop()
-
-    assistant_id = st.sidebar.selectbox(
-        "Select Assistant", options=assistants, format_func=lambda x: assistants[x]
-    )
-    st.sidebar.caption(f"ID: {assistant_id}")
-
-    return assistant_id, assistants[assistant_id]
 
 
 def add_assistant(app_state: AppState) -> None:

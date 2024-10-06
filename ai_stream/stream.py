@@ -15,8 +15,8 @@ from streamlit.delta_generator import DeltaGenerator
 from ai_stream import ASSISTANT_LABEL
 from ai_stream import TESTING
 from ai_stream import USER_LABEL
+from ai_stream.components.misc import select_assistant
 from ai_stream.components.tools import TOOLS
-from ai_stream.components.tools import tools_to_openai_functions
 from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
 
@@ -132,6 +132,7 @@ class UIAssistantEventHandler(AssistantEventHandler):
 
 def get_response(
     app_state: AppState,
+    assistant_id: str,
     model_name: str = MODEL_NAME,
 ) -> None:
     """Send messages to backend to get an LLM response with UI rendering."""
@@ -139,6 +140,7 @@ def get_response(
     with st_placeholder:
         st.write(PROCESSING_START)
     if "files" in app_state.recent_tool_output:
+        # TODO: Needs update
         # Use code interpreter assistant
         file_ids = []
 
@@ -149,25 +151,9 @@ def get_response(
             )
             file_ids.append(uploaded.id)
 
-        # Create an assistant using the file ID
-        assistant = app_state.openai_client.beta.assistants.create(
-            instructions=SYSTEM_PROMPT,
-            model=MODEL_NAME,
-            tools=[{"type": "code_interpreter"}],
-            tool_resources={"code_interpreter": {"file_ids": file_ids}},
-        )
-    else:
-        tools = tools_to_openai_functions()
-        # Create an assistant using the file ID
-        assistant = app_state.openai_client.beta.assistants.create(
-            instructions=SYSTEM_PROMPT,
-            model=model_name,
-            tools=tools,  # type: ignore[arg-type]
-        )
-
     with app_state.openai_client.beta.threads.runs.stream(
         thread_id=app_state.openai_thread_id,
-        assistant_id=assistant.id,
+        assistant_id=assistant_id,
         event_handler=UIAssistantEventHandler(app_state=app_state, st_placeholder=st_placeholder),
     ) as stream:
         stream.until_done()
@@ -198,7 +184,8 @@ def display_history(app_state: AppState) -> None:
 def main(app_state: AppState) -> None:
     """App layout."""
     st.title(TITLE)
-    if not app_state.openai_thread_id:
+    assistant_id, _ = select_assistant(app_state.assistants)
+    if not app_state.openai_thread_id:  # One thread per session
         thread = app_state.openai_client.beta.threads.create()
         app_state.openai_thread_id = thread.id
     display_history(app_state)
@@ -214,7 +201,7 @@ def main(app_state: AppState) -> None:
         )
 
         with st.chat_message(ASSISTANT_LABEL):
-            get_response(app_state)
+            get_response(app_state, assistant_id)
 
 
 if not TESTING:
