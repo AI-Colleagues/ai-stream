@@ -34,15 +34,15 @@ def on_startup() -> None:
     atexit.register(dump_data_to_disk)
 
 
-@st.cache_resource
-def load_tables():
+def load_tables(app_state: AppState):
     """Load IDs and names from DB."""
-    app_state: AppState = st.session_state.app_state
-    for table_cls in PYNAMODB_TABLES.values():
-        items = table_cls.scan(attributes_to_get=["id", "name"])
-        items_dict = {item.id: item.name for item in items}
-        table_name = table_cls.Meta.table_name
-        setattr(app_state, table_name, items_dict)
+    if not app_state.tables_loaded:
+        for table_cls in PYNAMODB_TABLES.values():
+            items = table_cls.scan(attributes_to_get=["id", "name"])
+            items_dict = {item.id: item.name for item in items}
+            table_name = table_cls.Meta.table_name
+            setattr(app_state, table_name, items_dict)
+        app_state.tables_loaded = True
 
     if not app_state.openai_client:
         return
@@ -77,7 +77,7 @@ def main(app_state: AppState) -> None:
     else:
         st.warning("Your OpenAI API key is needed for using this page.")
         st.stop()
-    load_tables()
+    load_tables(app_state)
     pg.run()
 
 

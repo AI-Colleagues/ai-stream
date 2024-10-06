@@ -2,26 +2,19 @@
 
 import streamlit as st
 from ai_stream import TESTING
-from ai_stream.components.messages import InputWidgetMessage
+from ai_stream.components.helpers import render_history
+from ai_stream.components.messages import InputWidget
 from ai_stream.components.messages import UserMessage
 from ai_stream.components.random_assistant import generate_random_response
 from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
 
 
-def render_history(history: list):
-    """Display chat history."""
-    for i, entry in enumerate(history):
-        if hasattr(entry, "disable") and i != len(history) - 1:
-            entry.disable()
-        entry.render()
-
-
 def check_block_chat_input(history: list):
     """Check waiting for input."""
     if history:
         entry = history[-1]
-        if isinstance(entry, InputWidgetMessage) and not entry.disabled and not entry.value:
+        if isinstance(entry, InputWidget) and not entry.disabled and not entry.value:
             return True
     return False
 
@@ -36,7 +29,7 @@ def main(app_state: AppState):
         disabled=disable_input,
     )
     if user_message_text:
-        user_message = UserMessage(user_message_text)
+        user_message = UserMessage(content=user_message_text)
         app_state.history.append(user_message)
 
         assistant_response = generate_random_response(user_message_text, len(app_state.history))

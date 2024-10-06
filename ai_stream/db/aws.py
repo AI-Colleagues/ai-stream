@@ -16,7 +16,7 @@ class AIStreamTable(Model):
     """Base table model."""
 
     id = UnicodeAttribute(hash_key=True)
-    name = UnicodeAttribute(range_key=True)
+    name = UnicodeAttribute()
     used_by = ListAttribute(of=UnicodeAttribute)
 
 
@@ -76,9 +76,7 @@ def create_tables() -> None:
 
     for table_name, table_class in PYNAMODB_TABLES.items():
         if not table_class.exists():
-            table_class.create_table(
-                wait=True, billing_mode=config.dynamodb.billing_mode
-            )
+            table_class.create_table(wait=True, billing_mode=config.dynamodb.billing_mode)
             logger.info(f"Table {table_name} created successfully.")
 
 
