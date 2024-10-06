@@ -5,6 +5,7 @@ from functools import wraps
 from typing import Any
 from openai import OpenAI
 from streamlit import session_state
+from ai_stream.utils.function_tools import Function2Display
 
 
 class AppState:
@@ -32,7 +33,7 @@ class AppState:
         """Assistant IDs and names, for displaying in the selector."""
         self.recent_tool_output: dict = {}
         """The latest tool output if any."""
-        self.current_function: dict = {}
+        self.current_function: Function2Display | None = None
         """Current function being edited."""
         self.current_assistant: dict = {}
         """Current assistant being edited."""

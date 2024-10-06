@@ -35,14 +35,14 @@ class Function2Display:
     """Function to display."""
 
     schema_id: str
-    schema_name: str
-    function_name: str
-    description: str
-    parameters: dict[str, FunctionParameter]
+    schema_name: str = ""
+    function_name: str = ""
+    description: str = ""
+    parameters: dict[str, FunctionParameter] = field(default_factory=dict)
     is_new: bool = False
 
     @classmethod
-    def from_open_ai_function(
+    def from_openai_function(
         cls, schema_id: str, schema_name: str, schema: str | dict, is_new: bool = False
     ) -> "Function2Display":
         """Convert a JSON Schema into an AI Stream function dictionary."""
@@ -78,7 +78,19 @@ class Function2Display:
         )
 
     @classmethod
-    def from_pydantic_model(cls, schema: type[BaseModel], **kwargs: dict) -> "Function2Display":
+    def from_pydantic_model(
+        cls, schema_id: str, schema_name: str, schema: type[BaseModel], is_new: bool = True
+    ) -> "Function2Display":
         """Load data from a Pydantic Model."""
-        schema = convert_to_openai_function(schema)
-        return cls.from_open_ai_function(schema=schema, **kwargs)
+        schema_dict = convert_to_openai_function(schema)
+        return cls.from_openai_function(
+            schema_id=schema_id,
+            schema_name=schema_name,
+            schema=schema_dict,
+            is_new=is_new,
+        )
+
+    @classmethod
+    def new(cls) -> "Function2Display":
+        """Create a new function."""
+        return cls(schema_id=create_id(), schema_name="Tmp", is_new=True)
