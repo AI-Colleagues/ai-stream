@@ -22,15 +22,9 @@ from ai_stream.utils.app_state import ensure_app_state
 
 
 TITLE = "AI Stream"
-MODEL_NAME = "gpt-4o"
-SYSTEM_PROMPT = (
-    "You are an AI agent with a lot of tools. Call the right one "
-    "according to user instructions."
-)
-
+MODEL_NAME = "gpt-4o-mini"
 PROCESSING_START = "`Processing`"
 PROCESSING_REFRESH = "`Processing...`"
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
