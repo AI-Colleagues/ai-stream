@@ -11,7 +11,7 @@ from openai.types.beta import CodeInterpreterTool
 from openai.types.beta import FileSearchTool
 from openai.types.beta import FunctionTool
 from ai_stream import TESTING
-from ai_stream.components.misc import select_assistant
+from ai_stream.components.helpers import select_assistant
 from ai_stream.config import load_config
 from ai_stream.db.aws import FunctionsTable
 from ai_stream.db.aws import PromptsTable

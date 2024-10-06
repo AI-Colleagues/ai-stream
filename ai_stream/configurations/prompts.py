@@ -5,7 +5,7 @@ import streamlit as st
 from code_editor import code_editor
 from pynamodb.exceptions import DoesNotExist
 from ai_stream import TESTING
-from ai_stream.components.misc import display_used_by
+from ai_stream.components.helpers import display_used_by
 from ai_stream.db.aws import PromptsTable
 from ai_stream.utils import create_id
 from ai_stream.utils.app_state import AppState
