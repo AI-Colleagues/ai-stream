@@ -81,7 +81,7 @@ class TextInput(InputWidget):
     """Assistant message with a text input widget."""
 
     class TextInputSchema(BaseModel):
-        """Schema for TextInput."""
+        """Tool for displaying a single-line text input widget."""
 
         label: str = Field(..., description="A short label explaining the input.")
         value: str | None = Field("", description="The initial text value of the input.")
