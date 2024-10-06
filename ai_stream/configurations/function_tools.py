@@ -38,8 +38,8 @@ class FunctionParameter:
         self.items_type_index = PARAM_TYPES.index(self.items_type)
 
 
-def load_from_json_schema(config_name: str, schema: str | dict) -> dict:
-    """Convert a JSON Schema into a function dictionary."""
+def convert_openai_function_to_aistream_dict(schema_name: str, schema: str | dict) -> dict:
+    """Convert a JSON Schema into an AI Stream function dictionary."""
     if isinstance(schema, str):
         schema_dict = json.loads(schema)
     else:
@@ -64,7 +64,7 @@ def load_from_json_schema(config_name: str, schema: str | dict) -> dict:
 
     # Construct the function dictionary
     function_dict = {
-        "config_name": config_name,
+        "schema_name": schema_name,
         "name": function_name,
         "description": function_description,
         "parameters": converted_params,
@@ -75,7 +75,7 @@ def load_from_json_schema(config_name: str, schema: str | dict) -> dict:
 
 def new_function() -> dict:
     """Create and return a new function."""
-    return {"name": "", "config_name": "NewFunction", "description": "", "parameters": {}}
+    return {"name": "", "schema_name": "NewFunction", "description": "", "parameters": {}}
 
 
 def add_function(app_state: AppState) -> None:
@@ -211,10 +211,12 @@ def get_function(app_state: AppState, function_id: str) -> dict:
     if app_state.current_function.get("id", "") != function_id:  # Needs reloading
         try:
             item = FunctionsTable.get(function_id)
-        except DoesNotExist:
+        except DoesNotExist:  # function_id is for a newly created function
             item = None
         if item:
-            app_state.current_function = load_from_json_schema(item.name, item.value.as_dict())
+            app_state.current_function = convert_openai_function_to_aistream_dict(
+                item.name, item.value.as_dict()
+            )
 
             st.subheader("Used By:")
             if item.used_by:
@@ -238,14 +240,14 @@ def get_function(app_state: AppState, function_id: str) -> dict:
                 "to load the changes."
             )
             code = code_editor(current_schema, lang="json", height=200)
-            return load_from_json_schema(
-                stored_function["config_name"], code["text"] or current_schema
+            return convert_openai_function_to_aistream_dict(
+                stored_function["schema_name"], code["text"] or current_schema
             )
     else:
         return stored_function
 
 
-def display_function(config_name: str, selected_function: dict, function_id: str) -> tuple:
+def display_function(schema_name: str, selected_function: dict, function_id: str) -> tuple:
     """Display the selected function."""
     function_names = list(TOOLS.keys())
     try:
@@ -262,7 +264,7 @@ def display_function(config_name: str, selected_function: dict, function_id: str
     schema_cls = getattr(TOOLS[new_name], f"{new_name}Schema")
     schema = convert_to_openai_function(schema_cls)
     if not selected_function["parameters"]:
-        selected_function.update(load_from_json_schema(config_name, schema))
+        selected_function.update(convert_openai_function_to_aistream_dict(schema_name, schema))
     new_description = st.text_area(
         "Function Description",
         value=selected_function.get("description", ""),
@@ -298,7 +300,7 @@ def main(app_state: AppState) -> None:
     if st.button("New Function"):
         add_function(app_state)
 
-    function_id, config_name = choose_function(app_state.functions)
+    function_id, schema_name = choose_function(app_state.functions)
 
     # Now get the selected function
     selected_function = get_function(app_state, function_id)
@@ -306,7 +308,7 @@ def main(app_state: AppState) -> None:
 
     # Display function
     new_name, new_description, updated_parameters = display_function(
-        config_name, selected_function, function_id
+        schema_name, selected_function, function_id
     )
 
     # Build the JSON schema using the function
@@ -320,16 +322,16 @@ def main(app_state: AppState) -> None:
 
     st.code(json_schema, language="json")
 
-    config_name = st.text_input("Config Name", value=config_name)
+    schema_name = st.text_input("Schema Name", value=schema_name)
 
-    if st.button("Save Function", disabled=not config_name):
+    if st.button("Save Function", disabled=not schema_name):
         try:
             existing_function = FunctionsTable.get(function_id)
         except DoesNotExist:
             existing_function = None
         if existing_function:
             existing_function.update(
-                actions=[FunctionsTable.value.set(schema), FunctionsTable.name.set(config_name)]
+                actions=[FunctionsTable.value.set(schema), FunctionsTable.name.set(schema_name)]
             )
 
             if existing_function.used_by:
@@ -344,10 +346,10 @@ def main(app_state: AppState) -> None:
                     app_state.openai_client.beta.assistants.update(assistant_id, tools=tools)
             st.success(f"Function has been saved with name {new_name} and " f"ID {function_id}.")
         else:
-            item = FunctionsTable(id=function_id, name=config_name, used_by=[], value=schema)
+            item = FunctionsTable(id=function_id, name=schema_name, used_by=[], value=schema)
             item.save()
             st.success(f"Function has been saved with name {new_name} and " f"ID {function_id}.")
-        app_state.functions[function_id] = config_name
+        app_state.functions[function_id] = schema_name
 
     # Option to remove the function
     if st.button("Remove Function"):
