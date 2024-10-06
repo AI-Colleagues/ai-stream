@@ -42,7 +42,7 @@ def main(app_state: AppState) -> None:
 
     if st.button("New Prompt"):
         new_id = create_id()
-        app_state.prompts = OrderedDict([(new_id, "NewPrompt")] + list(app_state.prompts.items()))
+        app_state.prompts = OrderedDict([(new_id, "Tmp")] + list(app_state.prompts.items()))
 
     prompt_id2name = app_state.prompts
     if not prompt_id2name:
