@@ -189,14 +189,14 @@ class TextArea(InputWidget):
 
 @register_message
 @register_tool
-class FileUploader(Tool):
+class FileUploader(InputWidget):
     """Tool for displaying a Streamlit file_uploader."""
 
     class FileUploaderSchema(BaseModel):
         """Tool for displaying a Streamlit file_uploader."""
 
         label: str = Field(..., description="A short label explaining the file uploader.")
-        type: str | list[str] | None = Field(None, description="Array of allowed file extensions.")
+        type: list[str] | None = Field(None, description="Array of allowed file extensions.")
         accept_multiple_files: bool = Field(
             False, description="Whether multiple file uploads are allowed."
         )
@@ -268,8 +268,23 @@ class Image(OutputWidget):
 
 
 @register_message
+@register_tool
 class Table(OutputWidget):
     """Assistant message that displays a table."""
+
+    class TableSchema(BaseModel):
+        """Tool for displaying a table."""
+
+        data: dict = Field(
+            ..., description="The data to display, can be dataframe-like or collection-like."
+        )
+
+    args_schema: type[BaseModel] = TableSchema
+    name: str = "Table"
+    description: str = "Tool for displaying a table."
+
+    def _run(self, **kwargs: dict) -> None:
+        self.widget_data.update(kwargs)
 
     def render(self) -> None:
         """Render the table."""
