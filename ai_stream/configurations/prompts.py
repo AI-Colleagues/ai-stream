@@ -54,24 +54,30 @@ def main(app_state: AppState) -> None:
         list(prompt_id2name.keys()),
         format_func=lambda x: prompt_id2name[x],
     )
-    prompt_name = prompt_id2name[prompt_id]
-    prompt = PromptsTable.get(hash_key=prompt_id)
-    prompt_value = prompt.value
-    used_by = prompt.used_by
     st.sidebar.caption(f"ID: {prompt_id}")
+    prompt_name = prompt_id2name[prompt_id]
+    try:
+        prompt = PromptsTable.get(hash_key=prompt_id)
+        prompt_value = prompt.value
+        used_by = prompt.used_by
+    except DoesNotExist:
+        prompt_value = ""
+        used_by = []
 
     # Display text input and text area for editing
-    new_name = st.text_input("Prompt Name", value=prompt_name)
     st.write(
         "Press `Control + Enter` (Windows) or `Command + Enter` (Mac) " "to load the changes."
     )
-    code = code_editor(prompt_value, lang="markdown", height=500)
+    code = code_editor(prompt_value, lang="markdown", height=300)
     prompt_value = code["text"] or prompt_value
     # Display Markdown of the input texts
     st.markdown("### Preview")
+    st.divider()
     st.markdown(prompt_value)
+    st.divider()
 
     # Save Prompt button
+    new_name = st.text_input("Prompt Name", value=prompt_name)
     if st.button("Save Prompt", disabled=not (prompt_value and new_name)):
         save_prompt(app_state, prompt_id, new_name, prompt_value)
 

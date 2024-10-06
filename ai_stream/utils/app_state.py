@@ -29,6 +29,8 @@ class AppState:
         """Prompt IDs and names, for displaying in the selector."""
         self.functions: dict = {}
         """Function IDs and names, for displaying in the selector."""
+        self.tables_loaded: bool = False
+        """Tables already loaded."""
         self.assistants: dict = {}
         """Assistant IDs and names, for displaying in the selector."""
         self.recent_tool_output: dict = {}
