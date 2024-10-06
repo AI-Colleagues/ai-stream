@@ -39,6 +39,7 @@ class Function2Display:
     function_name: str = ""
     description: str = ""
     parameters: dict[str, FunctionParameter] = field(default_factory=dict)
+    used_by: list = field(default_factory=list)
     is_new: bool = False
 
     @classmethod

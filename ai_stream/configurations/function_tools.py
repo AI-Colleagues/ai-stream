@@ -6,6 +6,7 @@ import streamlit as st
 from code_editor import code_editor
 from pynamodb.exceptions import DoesNotExist
 from ai_stream import TESTING
+from ai_stream.components.helpers import display_used_by
 from ai_stream.components.tools import TOOLS
 from ai_stream.db.aws import FunctionsTable
 from ai_stream.utils import create_id
@@ -160,11 +161,7 @@ def get_function(app_state: AppState, schema_id: str) -> Function2Display:
             app_state.current_function = Function2Display.from_openai_function(
                 schema_id, item.name, item.value.as_dict()
             )
-
-            st.subheader("Used By:")
-            if item.used_by:
-                for asst in item.used_by:
-                    st.write(f"`{asst}`")
+            app_state.current_function.used_by = item.used_by
 
         else:
             st.error(f"Error loading function with ID {schema_id}.")
@@ -256,6 +253,7 @@ def main(app_state: AppState) -> None:
 
     # Now get the selected function
     selected_function = get_function(app_state, schema_id)
+    display_used_by(selected_function.used_by)
     function_name = selected_function.function_name
 
     # Display function

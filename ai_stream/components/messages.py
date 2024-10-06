@@ -60,7 +60,7 @@ class AssistantMessage(Message):
 class InputWidget(Message):
     """Base class for assistant messages with input widgets."""
 
-    widget_config: dict[str, Any]
+    widget_config: dict[str, Any] = {}
     value: Any = None
     disabled: bool = False
     block_chat_input: bool = False
@@ -275,13 +275,14 @@ class Table(OutputWidget):
     class TableSchema(BaseModel):
         """Tool for displaying a table."""
 
-        data: dict = Field(
+        data: list[str] = Field(
             ..., description="The data to display, can be dataframe-like or collection-like."
         )
 
     args_schema: type[BaseModel] = TableSchema
     name: str = "Table"
     description: str = "Tool for displaying a table."
+    widget_data: dict[str, Any] = {}
 
     def _run(self, **kwargs: dict) -> None:
         self.widget_data.update(kwargs)
