@@ -78,6 +78,7 @@ def add_parameter(selected_function: Function2Display) -> None:
     }
     new_param = FunctionParameter(**fields)  # type: ignore[arg-type]
     selected_function.parameters[new_id] = new_param
+    selected_function.is_new = False
 
 
 def remove_parameter(selected_function: Function2Display, param_id: str) -> None:
@@ -214,6 +215,7 @@ def display_function(selected_function: Function2Display) -> tuple:
         )
         selected_function.description = new_func.description
         selected_function.parameters = new_func.parameters
+
     new_description = st.text_area(
         "Function Description",
         value=selected_function.description,
