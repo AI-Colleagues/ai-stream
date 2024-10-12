@@ -35,7 +35,7 @@ def remove_function(app_state: AppState, schema_id: str) -> None:
 
 def build_json_schema(
     function_name: str, function_description: str, parameters: dict[str, FunctionParameter]
-) -> tuple:
+) -> tuple[dict, str]:
     """Build json schema given the function parameters."""
     required_params = [
         param.name for param in parameters.values() if param.required and param.name

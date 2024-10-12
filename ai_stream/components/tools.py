@@ -1,9 +1,10 @@
 """Tool related definitions."""
 
 from collections.abc import Callable
+from typing import Any
+from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.tools import BaseTool
 from langchain_core.utils.function_calling import convert_to_openai_function
-from pydantic import BaseModel
 from pynamodb.exceptions import DoesNotExist
 from ai_stream.config import get_logger
 from ai_stream.db.aws import FunctionsTable
@@ -41,6 +42,24 @@ def register_tool(cls: type[Tool]) -> Callable:
         logger.info(f"Stored new schema {tool_name}.")
 
     return cls
+
+
+@register_tool
+class StructuredOutput(Tool):
+    """Tool for generating structured output."""
+
+    class StructuredOutputSchema(BaseModel):
+        """Tool for returning structured outputs."""
+
+        pass
+
+    data_dict: dict[str, Any]
+    args_schema: type[BaseModel] = StructuredOutputSchema
+    name: str = "StructuredOutput"
+    description: str = "Tool for returning structured outputs."
+
+    def _run(self) -> dict:
+        return self.data_dict
 
 
 def tools_to_openai_functions() -> list[dict]:

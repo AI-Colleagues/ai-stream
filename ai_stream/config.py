@@ -10,7 +10,7 @@ logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 
 def get_logger(module_name: str) -> logging.Logger:
-    """Creates and returns a logger with the given module name."""
+    """Create and return a logger with the given module name."""
     # Create a logger with the specified module name
     logger = logging.getLogger(module_name)
     logger.setLevel(logging.INFO)
