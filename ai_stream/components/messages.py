@@ -84,17 +84,17 @@ class TextInput(InputWidget):
         """Tool for displaying a single-line text input widget."""
 
         label: str = Field(..., description="A short label explaining the input.")
-        value: str | None = Field("", description="The initial text value of the input.")
-        max_chars: int | None = Field(None, description="Maximum number of characters allowed.")
-        type: str | None = Field("default", description="Type of input: 'default' or 'password'.")
-        help: str | None = Field(None, description="Tooltip displayed next to the input.")
-        autocomplete: str | None = Field(
+        value: str = Field("", description="The initial text value of the input.")
+        max_chars: int = Field(None, description="Maximum number of characters allowed.")
+        type: str = Field("default", description="Type of input: 'default' or 'password'.")
+        help: str = Field(None, description="Tooltip displayed next to the input.")
+        autocomplete: str = Field(
             None, description="Autocomplete attribute for the input element."
         )
-        placeholder: str | None = Field(
+        placeholder: str = Field(
             None, description="Placeholder text displayed when input is empty."
         )
-        label_visibility: str | None = Field(
+        label_visibility: str = Field(
             "visible", description="Visibility of the label: 'visible', 'hidden', or 'collapsed'."
         )
 
@@ -196,12 +196,12 @@ class FileUploader(InputWidget):
         """Tool for displaying a Streamlit file_uploader."""
 
         label: str = Field(..., description="A short label explaining the file uploader.")
-        type: list[str] | None = Field(None, description="Array of allowed file extensions.")
+        type: list[str] = Field(None, description="Array of allowed file extensions.")
         accept_multiple_files: bool = Field(
             False, description="Whether multiple file uploads are allowed."
         )
-        help: str | None = Field(None, description="Tooltip displayed next to the file uploader.")
-        label_visibility: str | None = Field(
+        help: str = Field(None, description="Tooltip displayed next to the file uploader.")
+        label_visibility: str = Field(
             "visible", description="Visibility of the label: 'visible', 'hidden', or 'collapsed'."
         )
 
