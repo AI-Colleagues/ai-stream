@@ -3,11 +3,12 @@
 import json
 from dataclasses import dataclass
 from dataclasses import field
-from langchain.pydantic_v1 import BaseModel
 from langchain_core.utils.function_calling import convert_to_openai_function
+from pydantic import BaseModel
 from ai_stream.utils import create_id
 
 
+NEW_SCHEMA_NAME = "New"
 PARAM_TYPES = ["string", "number", "integer", "boolean", "array", "object"]
 
 
@@ -94,4 +95,4 @@ class Function2Display:
     @classmethod
     def new(cls) -> "Function2Display":
         """Create a new function."""
-        return cls(schema_id=create_id(), schema_name="Tmp", is_new=True)
+        return cls(schema_id=create_id(), schema_name=NEW_SCHEMA_NAME, is_new=True)

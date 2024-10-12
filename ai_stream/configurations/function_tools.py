@@ -12,6 +12,7 @@ from ai_stream.db.aws import FunctionsTable
 from ai_stream.utils import create_id
 from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
+from ai_stream.utils.function_tools import NEW_SCHEMA_NAME
 from ai_stream.utils.function_tools import PARAM_TYPES
 from ai_stream.utils.function_tools import Function2Display
 from ai_stream.utils.function_tools import FunctionParameter
@@ -35,7 +36,7 @@ def remove_function(app_state: AppState, schema_id: str) -> None:
 
 def build_json_schema(
     function_name: str, function_description: str, parameters: dict[str, FunctionParameter]
-) -> tuple:
+) -> tuple[dict, str]:
     """Build json schema given the function parameters."""
     required_params = [
         param.name for param in parameters.values() if param.required and param.name
@@ -78,6 +79,7 @@ def add_parameter(selected_function: Function2Display) -> None:
     }
     new_param = FunctionParameter(**fields)  # type: ignore[arg-type]
     selected_function.parameters[new_id] = new_param
+    selected_function.is_new = False
 
 
 def remove_parameter(selected_function: Function2Display, param_id: str) -> None:
@@ -214,6 +216,7 @@ def display_function(selected_function: Function2Display) -> tuple:
         )
         selected_function.description = new_func.description
         selected_function.parameters = new_func.parameters
+
     new_description = st.text_area(
         "Function Description",
         value=selected_function.description,
@@ -273,6 +276,9 @@ def main(app_state: AppState) -> None:
     schema_name = st.text_input("Schema Name", value=schema_name)
 
     if st.button("Save Function", disabled=not schema_name):
+        if schema_name == NEW_SCHEMA_NAME:
+            st.warning("Please use a different name.")
+            st.stop()
         try:
             existing_function = FunctionsTable.get(schema_id)
         except DoesNotExist:
