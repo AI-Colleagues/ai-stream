@@ -3,8 +3,8 @@
 import json
 from dataclasses import dataclass
 from dataclasses import field
-from langchain.pydantic_v1 import BaseModel
 from langchain_core.utils.function_calling import convert_to_openai_function
+from pydantic import BaseModel
 from ai_stream.utils import create_id
 
 

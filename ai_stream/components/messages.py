@@ -5,8 +5,8 @@ from abc import abstractmethod
 from typing import Any
 import pandas as pd
 import streamlit as st
-from langchain_core.pydantic_v1 import BaseModel
-from langchain_core.pydantic_v1 import Field
+from pydantic import BaseModel
+from pydantic import Field
 from ai_stream import ASSISTANT_LABEL
 from ai_stream import USER_LABEL
 from ai_stream.components.tools import Tool
