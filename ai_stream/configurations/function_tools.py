@@ -12,6 +12,7 @@ from ai_stream.db.aws import FunctionsTable
 from ai_stream.utils import create_id
 from ai_stream.utils.app_state import AppState
 from ai_stream.utils.app_state import ensure_app_state
+from ai_stream.utils.function_tools import NEW_SCHEMA_NAME
 from ai_stream.utils.function_tools import PARAM_TYPES
 from ai_stream.utils.function_tools import Function2Display
 from ai_stream.utils.function_tools import FunctionParameter
@@ -275,6 +276,9 @@ def main(app_state: AppState) -> None:
     schema_name = st.text_input("Schema Name", value=schema_name)
 
     if st.button("Save Function", disabled=not schema_name):
+        if schema_name == NEW_SCHEMA_NAME:
+            st.warning("Please use a different name.")
+            st.stop()
         try:
             existing_function = FunctionsTable.get(schema_id)
         except DoesNotExist:
