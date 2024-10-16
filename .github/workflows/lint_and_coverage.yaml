@@ -1,0 +1,39 @@
+name: Lint and Coverage
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint-and-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.7
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.1.1
+        with:
+          python-version: 3.12.0
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "export PATH=\"$HOME/.local/bin:$PATH\"" >> $GITHUB_ENV
+
+      - name: Install dev dependencies
+        run: |
+          poetry install --only dev
+
+      - name: Run lint
+        run: |
+          make lint
+
+      - name: Run coverage
+        run: |
+          make coverage
