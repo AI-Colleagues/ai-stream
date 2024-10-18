@@ -7,6 +7,13 @@ on:
     types:
     - opened
     - synchronize
+    paths-ignore:
+    - 'README.md'
+    - 'LICENCE'
+    - '.pre-commit-config.yaml'
+    - '.gitignore'
+    - '.env.example'
+
 
 jobs:
   lint-and-coverage:
