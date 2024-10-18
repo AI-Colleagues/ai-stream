@@ -28,7 +28,7 @@ jobs:
 
       - name: Install dev dependencies
         run: |
-          poetry install --only dev
+          poetry install
 
       - name: Run lint
         run: |
