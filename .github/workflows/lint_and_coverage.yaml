@@ -1,0 +1,46 @@
+name: Lint and Coverage
+
+on:
+  pull_request:
+    branches:
+    - main
+    types:
+    - opened
+    - synchronize
+    paths-ignore:
+    - 'README.md'
+    - 'LICENCE'
+    - '.pre-commit-config.yaml'
+    - '.gitignore'
+    - '.env.example'
+
+
+jobs:
+  lint-and-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.7
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.1.1
+        with:
+          python-version: 3.12.0
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "export PATH=\"$HOME/.local/bin:$PATH\"" >> $GITHUB_ENV
+
+      - name: Install dev dependencies
+        run: |
+          poetry install
+
+      - name: Run lint
+        run: |
+          poetry run make lint
+
+      - name: Run coverage
+        run: |
+          poetry run make coverage

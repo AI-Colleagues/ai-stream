@@ -2,7 +2,7 @@
 
 from collections import OrderedDict
 import streamlit as st
-from code_editor import code_editor
+from code_editor import code_editor  # type: ignore[import-untyped]
 from pynamodb.exceptions import DoesNotExist
 from ai_stream import TESTING
 from ai_stream.components.helpers import display_used_by
@@ -18,13 +18,14 @@ def save_prompt(app_state: AppState, prompt_id: str, prompt_name: str, prompt_va
         existing_prompt = PromptsTable.get(hash_key=prompt_id)
     except DoesNotExist:
         existing_prompt = None
+    assert app_state.openai_client
     if existing_prompt:
         # Update existing prompt
         existing_prompt.update(actions=[PromptsTable.value.set(prompt_value)])
         if existing_prompt.used_by:
             for assistant_id in existing_prompt.used_by:
                 app_state.openai_client.beta.assistants.update(
-                    assistant_id, instructions=prompt_value
+                    str(assistant_id), instructions=prompt_value
                 )
         st.success(f"Prompt has been updated with name {prompt_name} and ID {prompt_id}.")
     else:
@@ -60,7 +61,7 @@ def main(app_state: AppState) -> None:
     try:
         prompt = PromptsTable.get(hash_key=prompt_id)
         prompt_value = prompt.value
-        used_by = prompt.used_by
+        used_by = [str(item) for item in prompt.used_by]
     except DoesNotExist:
         prompt_value = ""
         used_by = []

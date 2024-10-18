@@ -20,7 +20,7 @@ class FunctionParameter:
     description: str = ""
     type: str = "string"  # TODO: Support multi-type annotation (anyOf)
     required: bool = True
-    enum: list = field(default_factory=list)
+    enum: list[str] = field(default_factory=list)
     items_type: str = "string"
     type_index: int = 0
     items_type_index: int = 0

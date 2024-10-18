@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 from dataclasses import dataclass
-from pathlib import PosixPath
+from pathlib import Path
 import streamlit as st
 from streamlit.navigation.page import StreamlitPage
 
@@ -26,7 +26,7 @@ class AppPage:
 
 _registry_dict: dict[str, dict] = defaultdict(dict)
 page_registry: dict[str, list] = defaultdict(list)
-page_defaults_registry: dict[PosixPath, PageDefaults] = {}
+page_defaults_registry: dict[Path, PageDefaults] = {}
 
 
 def register_page(cls: type[AppPage]) -> None:
@@ -34,6 +34,7 @@ def register_page(cls: type[AppPage]) -> None:
     _registry_dict[cls.group][cls.weight] = cls.page
     # Keep the group sorted
     page_registry[cls.group] = list(dict(sorted(_registry_dict[cls.group].items())).values())
+    assert isinstance(cls.page._page, Path)
     page_defaults_registry[cls.page._page] = cls.page_defaults
 
 

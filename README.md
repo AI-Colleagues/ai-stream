@@ -28,5 +28,5 @@ Then type to start the app: `poetry run streamlit run ai_stream/app.py`
 * [x] Add more support for Streamlit widgets to create an MVP
 * [ ] Add unit tests
 * [ ] Add docs
-* [ ] Add CI/CD
+* [x] Add CI/CD
 * [ ] Use multiple Assistants, e.g., separating UI and backend.
