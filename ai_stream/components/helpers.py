@@ -108,6 +108,7 @@ class StreamAssistantEventHandler(AssistantEventHandler):
     def submit_tool_outputs(self, tool_outputs: list, run_id: str) -> str:
         """Use the submit_tool_outputs_stream helper."""
         assert self.current_run
+        assert self.client
         with self.client.beta.threads.runs.submit_tool_outputs_stream(
             thread_id=self.current_run.thread_id,
             run_id=self.current_run.id,

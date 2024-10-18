@@ -192,6 +192,7 @@ def add_assistant(app_state: AppState) -> None:
 
 def save_assistant(app_state: AppState, assistant_id: str, configuration: dict) -> str:
     """Save or update the given assistant."""
+    assert app_state.openai_client
     if assistant_id.startswith("asst_"):  # Update
         assistant = app_state.openai_client.beta.assistants.update(assistant_id, **configuration)
     else:
@@ -199,15 +200,17 @@ def save_assistant(app_state: AppState, assistant_id: str, configuration: dict) 
     # Register to used prompt and functions
     metadata = configuration["metadata"]
     prompt_id = metadata["prompt_id"]
-    item = PromptsTable.get(prompt_id)
-    if assistant.id not in item.used_by:
-        item.update(actions=[PromptsTable.used_by.set(item.used_by + [assistant.id])])
+    prompt = PromptsTable.get(prompt_id)
+    if assistant.id not in prompt.used_by:
+        prompt.update(actions=[PromptsTable.used_by.set(prompt.used_by + [assistant.id])])  # type: ignore[list-item]
     for key, val in metadata.items():
         if not key.startswith("function_"):
             continue
-        item = FunctionsTable.get(val)
-        if assistant.id not in item.used_by:
-            item.update(actions=[FunctionsTable.used_by.set(item.used_by + [assistant.id])])
+        function = FunctionsTable.get(val)
+        if assistant.id not in function.used_by:
+            function.update(
+                actions=[FunctionsTable.used_by.set(function.used_by + [assistant.id])]  # type: ignore[list-item]
+            )
     return assistant.id
 
 
@@ -244,14 +247,16 @@ def main(app_state: AppState) -> None:
         # Deregister to used prompt and functions
         metadata = configuration["metadata"]
         prompt_id = metadata["prompt_id"]
-        item = PromptsTable.get(prompt_id)
-        item.update(actions=[PromptsTable.used_by.set(item.used_by.remove(assistant_id))])
+        prompt = PromptsTable.get(prompt_id)
+        prompt.used_by.remove(assistant_id)
+        prompt.update(actions=[PromptsTable.used_by.set(prompt.used_by)])
 
         for key, val in metadata.items():
             if not key.startswith("function_"):
                 continue
-            item = FunctionsTable.get(val)
-            item.update(actions=[FunctionsTable.used_by.set(item.used_by.remove(assistant_id))])
+            function = FunctionsTable.get(val)
+            function.used_by.remove(assistant_id)
+            function.update(actions=[FunctionsTable.used_by.set(function.used_by)])
 
         app_state.openai_client.beta.assistants.delete(assistant_id)
         # Delete from app_state.assistants

@@ -32,8 +32,8 @@ def generate_random_response(user_message: str, message_counter: int) -> Any:
             "What makes you say that?",
             "How does that make you feel?",
         ]
-        assistant_message = random.choice(possible_messages)
-        return AssistantMessage(content=assistant_message)
+        message_choice = random.choice(possible_messages)
+        return AssistantMessage(content=message_choice)
 
     elif response_type == "output_widget":
         possible_output_widgets = [
