@@ -2,6 +2,7 @@
 
 import atexit
 import os
+from pathlib import Path
 import streamlit as st
 from moto.server import ThreadedMotoServer
 from openai import OpenAI
@@ -67,9 +68,10 @@ def main(app_state: AppState) -> None:
         "OpenAI Key", type="password", value=os.environ.get("OPENAI_API_KEY", "")
     )
     pg = st.navigation(page_registry)
+    assert isinstance(pg._page, Path)
 
     if api_key:
-        client = OpenAI(api_key=api_key, **kwargs)
+        client = OpenAI(api_key=api_key, **kwargs)  # type: ignore[arg-type]
         app_state.openai_client = client
     # Skip the api_key checking for random_stream
     elif page_defaults_registry[pg._page].skip_api_key:

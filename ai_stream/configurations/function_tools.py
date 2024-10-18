@@ -2,8 +2,10 @@
 
 import json
 from collections import OrderedDict
+from typing import Any
 import streamlit as st
-from code_editor import code_editor
+from code_editor import code_editor  # type: ignore[import-untyped]
+from openai.types.beta import FunctionTool
 from pynamodb.exceptions import DoesNotExist
 from ai_stream import TESTING
 from ai_stream.components.helpers import display_used_by
@@ -45,7 +47,7 @@ def build_json_schema(
     for param in parameters.values():
         if not param.name:
             continue  # Skip parameters without a name
-        prop = {"type": param.type, "description": param.description}
+        prop: dict[str, Any] = {"type": param.type, "description": param.description}
         if param.type in ["string", "number", "integer"]:
             if param.enum:
                 prop["enum"] = param.enum
@@ -53,14 +55,14 @@ def build_json_schema(
             prop["items"] = {"type": param.items_type}
         properties[param.name] = prop
 
-    parameters = {"type": "object", "properties": properties}
+    parameters_dict = {"type": "object", "properties": properties}
     if required_params:
-        parameters["required"] = required_params
+        parameters_dict["required"] = required_params
 
     schema = {
         "name": function_name,
         "description": function_description,
-        "parameters": parameters,
+        "parameters": parameters_dict,
     }
 
     return schema, json.dumps(schema, indent=2)
@@ -169,6 +171,7 @@ def get_function(app_state: AppState, schema_id: str) -> Function2Display:
             st.error(f"Error loading function with ID {schema_id}.")
 
     stored_function = app_state.current_function
+    assert stored_function
     if st.checkbox("Expert Mode"):
         _, current_schema = build_json_schema(
             stored_function.function_name,
@@ -283,6 +286,7 @@ def main(app_state: AppState) -> None:
             existing_function = FunctionsTable.get(schema_id)
         except DoesNotExist:
             existing_function = None
+        assert app_state.openai_client
         if existing_function:
             existing_function.update(
                 actions=[FunctionsTable.value.set(schema), FunctionsTable.name.set(schema_name)]
@@ -290,14 +294,14 @@ def main(app_state: AppState) -> None:
 
             if existing_function.used_by:
                 for assistant_id in existing_function.used_by:
-                    assistant = app_state.openai_client.beta.assistants.retrieve(assistant_id)
+                    assistant = app_state.openai_client.beta.assistants.retrieve(str(assistant_id))
                     tools = [
                         tool.to_dict()
                         for tool in assistant.tools
-                        if tool.function.name != function_name
+                        if isinstance(tool, FunctionTool) and tool.function.name != function_name
                     ]  # Remove old function
                     tools.append({"type": "function", "function": schema})
-                    app_state.openai_client.beta.assistants.update(assistant_id, tools=tools)
+                    app_state.openai_client.beta.assistants.update(str(assistant_id), tools=tools)  # type: ignore[arg-type]
             st.success(f"Function has been saved with name {new_name} and " f"ID {schema_id}.")
         else:
             item = FunctionsTable(id=schema_id, name=schema_name, used_by=[], value=schema)

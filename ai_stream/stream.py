@@ -28,6 +28,7 @@ def get_response(
     st_placeholder = st.empty()
     with st_placeholder:
         st.write(PROCESSING_START)
+    assert app_state.openai_client
     if "files" in app_state.recent_tool_output:
         # TODO: Needs update
         # Use code interpreter assistant
@@ -57,6 +58,7 @@ def main(app_state: AppState) -> None:
     """App layout."""
     st.title(TITLE)
     assistant_id, _ = select_assistant(app_state.assistants)
+    assert app_state.openai_client
     if not app_state.openai_thread_id:  # One thread per session
         thread = app_state.openai_client.beta.threads.create()
         app_state.openai_thread_id = thread.id
